@@ -168,19 +168,22 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         stack.alignment = .width
 
         if let icon = NSImage(named: "AppIcon") ?? NSImage(named: "CmdTabIcon") {
-            let iconRow = NSStackView()
-            iconRow.orientation = .horizontal
-            iconRow.alignment = .centerY
-            iconRow.distribution = .gravityAreas
+            let iconRow = NSView()
+            iconRow.translatesAutoresizingMaskIntoConstraints = false
 
             let iconView = NSImageView(image: icon)
             iconView.imageScaling = .scaleProportionallyUpOrDown
             iconView.translatesAutoresizingMaskIntoConstraints = false
+            iconRow.addSubview(iconView)
+
             NSLayoutConstraint.activate([
+                iconRow.heightAnchor.constraint(equalToConstant: 104),
+
+                iconView.centerXAnchor.constraint(equalTo: iconRow.centerXAnchor),
+                iconView.topAnchor.constraint(equalTo: iconRow.topAnchor, constant: 4),
                 iconView.widthAnchor.constraint(equalToConstant: 96),
                 iconView.heightAnchor.constraint(equalToConstant: 96),
             ])
-            iconRow.addArrangedSubview(iconView)
             stack.addArrangedSubview(iconRow)
         }
 

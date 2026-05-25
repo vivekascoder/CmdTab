@@ -55,6 +55,35 @@ For local testing without notarization:
 NOTARIZE=0 ./scripts/release_dmg.sh
 ```
 
+Manual notarization commands:
+
+```bash
+# Submit the DMG to Apple and wait for the result.
+xcrun notarytool submit dist/CmdTab.dmg \
+  --keychain-profile cmdtab-notary \
+  --wait
+
+# If accepted, staple the ticket to the DMG.
+xcrun stapler staple dist/CmdTab.dmg
+
+# Validate the stapled ticket.
+xcrun stapler validate dist/CmdTab.dmg
+
+# Gatekeeper assessment check.
+spctl --assess --type open \
+  --context context:primary-signature \
+  --verbose=4 dist/CmdTab.dmg
+```
+
 ## Landing Page
 
 The vanilla HTML/CSS/JS landing page lives in `LP/` and is deployed on Vercel.
+
+## Things to do
+
+- Logo attached in DMG, app
+- Release from github,
+- Site should allow downloading .dmg
+- Recorded Video demo of the app in action
+- twitter thread and video
+- Start at startup
