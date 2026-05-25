@@ -74,6 +74,44 @@ private final class OverlayListRowButton: NSButton {
     }
 }
 
+private final class KeyBadgeView: NSView {
+    private let text: String
+    private let attributes: [NSAttributedString.Key: Any]
+
+    init(text: String) {
+        self.text = text
+        self.attributes = [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .semibold),
+            .foregroundColor: NSColor(white: 0.74, alpha: 1.0),
+        ]
+        super.init(frame: .zero)
+        wantsLayer = true
+        layer?.backgroundColor = NSColor(white: 1.0, alpha: 0.10).cgColor
+        layer?.cornerRadius = 6
+        layer?.cornerCurve = .continuous
+        translatesAutoresizingMaskIntoConstraints = false
+        setContentHuggingPriority(.required, for: .horizontal)
+        setContentCompressionResistancePriority(.required, for: .horizontal)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+
+        let size = text.size(withAttributes: attributes)
+        let rect = NSRect(
+            x: bounds.midX - size.width / 2,
+            y: bounds.midY - size.height / 2,
+            width: size.width,
+            height: size.height
+        )
+        text.draw(in: rect, withAttributes: attributes)
+    }
+}
+
 final class OverlayPanelController: NSObject {
     private var panel: NSPanel?
     private var gridView: NSStackView?
@@ -372,7 +410,7 @@ final class OverlayPanelController: NSObject {
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         row.addSubview(nameLabel)
 
-        var shortcutLabel: NSTextField?
+        var shortcutLabel: KeyBadgeView?
         if let bundleID = app.bundleIdentifier,
            let shortcut = AppSettings.shared.appShortcuts[bundleID],
            !shortcut.isEmpty {
@@ -414,28 +452,8 @@ final class OverlayPanelController: NSObject {
         return row
     }
 
-    private func keyBadge(_ text: String) -> NSTextField {
-        let label = NSTextField(frame: .zero)
-        label.stringValue = text
-        label.font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
-        label.textColor = NSColor(white: 0.74, alpha: 1.0)
-        label.alignment = .center
-        label.cell?.alignment = .center
-        label.cell?.usesSingleLineMode = true
-        label.cell?.lineBreakMode = .byClipping
-        label.isEditable = false
-        label.isSelectable = false
-        label.isBordered = false
-        label.drawsBackground = false
-        label.focusRingType = .none
-        label.wantsLayer = true
-        label.layer?.backgroundColor = NSColor(white: 1.0, alpha: 0.10).cgColor
-        label.layer?.cornerRadius = 6
-        label.layer?.cornerCurve = .continuous
-        label.setContentHuggingPriority(.required, for: .horizontal)
-        label.setContentCompressionResistancePriority(.required, for: .horizontal)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
+    private func keyBadge(_ text: String) -> KeyBadgeView {
+        KeyBadgeView(text: text)
     }
 
     private func makeGridCell(containing block: AppBlockView? = nil) -> NSView {
