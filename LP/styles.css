@@ -362,6 +362,10 @@ a {
 }
 
 .space-switching-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr);
+  gap: 28px;
+  align-items: center;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -379,6 +383,15 @@ a {
 
 .space-switching p:last-child {
   max-width: 640px;
+}
+
+.space-switching img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #050506;
 }
 
 /* Download */
@@ -495,6 +508,10 @@ footer p {
   .step-arrow {
     transform: rotate(90deg);
     padding-top: 0;
+  }
+
+  .space-switching-copy {
+    grid-template-columns: 1fr;
   }
 }
 
