@@ -6,71 +6,39 @@
   <title>CmdTab — Opinionated Application Launcher</title>
   <link rel="icon" type="image/png" href="app-icon.png">
   <link rel="apple-touch-icon" href="app-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Overpass:ital,wght@0,100..900;1,100..900&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
 </head>
 <body>
 
 <header class="hero">
-  <div class="hero-grid">
-    <div class="hero-text">
-      <img class="hero-logo" src="app-icon.png" alt="CmdTab app icon">
-      <p class="eyebrow">macOS App Switcher</p>
-      <h1>Opinionated Application Launcher</h1>
-      <p class="subtitle">
-        Press Right <kbd>⌘</kbd> and a number. <strong>One key combo.</strong> Switch to any app instantly.
-      </p>
-      <div class="hero-actions">
-        <a href="#download" class="btn btn-primary">Download for macOS</a>
-        <span class="version">Free &amp; open source</span>
-      </div>
-    </div>
-    <div class="hero-visual">
-      <div class="overlay-mockup" id="overlayMockup">
-        <div class="mockup-app" data-num="1">
-          <div class="mockup-icon safari"></div>
-          <span class="mockup-name">Safari</span>
-          <span class="mockup-num">1</span>
-        </div>
-        <div class="mockup-app" data-num="2">
-          <div class="mockup-icon terminal"></div>
-          <span class="mockup-name">Terminal</span>
-          <span class="mockup-num">2</span>
-        </div>
-        <div class="mockup-app" data-num="3">
-          <div class="mockup-icon finder"></div>
-          <span class="mockup-name">Finder</span>
-          <span class="mockup-num">3</span>
-        </div>
-        <div class="mockup-app" data-num="4">
-          <div class="mockup-icon slack"></div>
-          <span class="mockup-name">Slack</span>
-          <span class="mockup-num">4</span>
-        </div>
-        <div class="mockup-app" data-num="5">
-          <div class="mockup-icon code"></div>
-          <span class="mockup-name">Code</span>
-          <span class="mockup-num">5</span>
-        </div>
-        <div class="mockup-app" data-num="6">
-          <div class="mockup-icon mail"></div>
-          <span class="mockup-name">Mail</span>
-          <span class="mockup-num">6</span>
-        </div>
-        <div class="mockup-app" data-num="7">
-          <div class="mockup-icon music"></div>
-          <span class="mockup-name">Music</span>
-          <span class="mockup-num">7</span>
-        </div>
-        <div class="mockup-app" data-num="8">
-          <div class="mockup-icon notes"></div>
-          <span class="mockup-name">Notes</span>
-          <span class="mockup-num">8</span>
-        </div>
-      </div>
-      <p class="mockup-hint">Hold Right <kbd>⌘</kbd> + press a number</p>
+  <div class="hero-inner">
+    <img class="hero-logo" src="app-icon.png" alt="CmdTab app icon">
+    <p class="eyebrow">macOS App Switcher</p>
+    <h1>Opinionated Application Launcher</h1>
+    <p class="subtitle">
+      Press Right <kbd>⌘</kbd> and a number. <strong>One key combo.</strong> Switch to any app instantly.
+    </p>
+    <div class="hero-actions">
+      <a href="#download" class="btn btn-primary">Download for macOS</a>
+      <a class="version" href="https://github.com/vivekascoder/cmdtab">Free &amp; open source</a>
     </div>
   </div>
 </header>
+
+<section class="demo" aria-label="CmdTab demo video">
+  <video-player class="demo-player">
+    <video-skin>
+      <video src="assets/CmdTabFinal.mp4" controls preload="metadata" playsinline></video>
+    </video-skin>
+  </video-player>
+  <blockquote class="demo-quote">
+    “Use the unused Command key for the thing you do all day: switching apps.”
+  </blockquote>
+</section>
 
 <section class="how-it-works">
   <h2>Two steps. Half a second.</h2>
@@ -84,7 +52,7 @@
     <div class="step">
       <div class="step-num">2</div>
       <h3>Press a number</h3>
-      <p>Hit <kbd>1</kbd>–<kbd>9</kbd> or <kbd>0</kbd> to jump straight to that app. Or click it. That's it — no ⌘⇥ cycling, no searching.</p>
+      <p>Hit <kbd>1</kbd>–<kbd>9</kbd> or <kbd>0</kbd> to jump straight to that app. Add custom app shortcuts too, like <kbd>O</kbd> for Obsidian. No ⌘⇥ cycling, no searching.</p>
     </div>
   </div>
 </section>
