@@ -167,13 +167,32 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         stack.spacing = 12
         stack.alignment = .width
 
+        if let icon = NSImage(named: "AppIcon") ?? NSImage(named: "CmdTabIcon") {
+            let iconRow = NSStackView()
+            iconRow.orientation = .horizontal
+            iconRow.alignment = .centerY
+            iconRow.distribution = .gravityAreas
+
+            let iconView = NSImageView(image: icon)
+            iconView.imageScaling = .scaleProportionallyUpOrDown
+            iconView.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                iconView.widthAnchor.constraint(equalToConstant: 96),
+                iconView.heightAnchor.constraint(equalToConstant: 96),
+            ])
+            iconRow.addArrangedSubview(iconView)
+            stack.addArrangedSubview(iconRow)
+        }
+
         let title = NSTextField(labelWithString: "CmdTab")
         title.font = NSFont.boldSystemFont(ofSize: 18)
+        title.alignment = .center
         stack.addArrangedSubview(title)
 
         let description = NSTextField(labelWithString: "A lightweight macOS app switcher for the right Command key.")
         description.textColor = .secondaryLabelColor
         description.font = NSFont.systemFont(ofSize: 13)
+        description.alignment = .center
         stack.addArrangedSubview(description)
 
         stack.addArrangedSubview(linkCard(title: "Website", detail: "vivek.ink", url: "https://vivek.ink"))

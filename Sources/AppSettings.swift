@@ -22,7 +22,7 @@ final class AppSettings {
     }
 
     var overlayLayoutMode: String {
-        get { defaults.string(forKey: "overlayLayoutMode") ?? "block" }
+        get { defaults.string(forKey: "overlayLayoutMode") ?? "list" }
         set {
             defaults.set(newValue, forKey: "overlayLayoutMode")
             NotificationCenter.default.post(name: .settingsChanged, object: nil)
@@ -102,7 +102,7 @@ final class AppSettings {
         defaults.register(defaults: [
             "showBackgroundApps": false,
             "panelAppearance": "dark",
-            "overlayLayoutMode": "block",
+            "overlayLayoutMode": "list",
             "overlayBackgroundColor": "#0A0A0A",
             "monitoringActive": false,
             "ignoredBundleIDs": [],

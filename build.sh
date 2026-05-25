@@ -31,6 +31,28 @@ swiftc \
 
 cp Resources/Info.plist "${BUNDLE_DIR}/Contents/"
 
+if [[ -f "${BUILD_DIR}/Resources/AppIcon.png" ]]; then
+    cp "${BUILD_DIR}/Resources/AppIcon.png" "${RESOURCES_DIR}/AppIcon.png"
+
+    ICONSET_DIR="${BUILD_DIR}/.build/CmdTab.iconset"
+    rm -rf "${ICONSET_DIR}"
+    mkdir -p "${ICONSET_DIR}"
+
+    sips -z 16 16     "${BUILD_DIR}/Resources/AppIcon.png" --out "${ICONSET_DIR}/icon_16x16.png" >/dev/null
+    sips -z 32 32     "${BUILD_DIR}/Resources/AppIcon.png" --out "${ICONSET_DIR}/icon_16x16@2x.png" >/dev/null
+    sips -z 32 32     "${BUILD_DIR}/Resources/AppIcon.png" --out "${ICONSET_DIR}/icon_32x32.png" >/dev/null
+    sips -z 64 64     "${BUILD_DIR}/Resources/AppIcon.png" --out "${ICONSET_DIR}/icon_32x32@2x.png" >/dev/null
+    sips -z 128 128   "${BUILD_DIR}/Resources/AppIcon.png" --out "${ICONSET_DIR}/icon_128x128.png" >/dev/null
+    sips -z 256 256   "${BUILD_DIR}/Resources/AppIcon.png" --out "${ICONSET_DIR}/icon_128x128@2x.png" >/dev/null
+    sips -z 256 256   "${BUILD_DIR}/Resources/AppIcon.png" --out "${ICONSET_DIR}/icon_256x256.png" >/dev/null
+    sips -z 512 512   "${BUILD_DIR}/Resources/AppIcon.png" --out "${ICONSET_DIR}/icon_256x256@2x.png" >/dev/null
+    sips -z 512 512   "${BUILD_DIR}/Resources/AppIcon.png" --out "${ICONSET_DIR}/icon_512x512.png" >/dev/null
+    sips -z 1024 1024 "${BUILD_DIR}/Resources/AppIcon.png" --out "${ICONSET_DIR}/icon_512x512@2x.png" >/dev/null
+    iconutil -c icns "${ICONSET_DIR}" -o "${RESOURCES_DIR}/CmdTabIcon.icns"
+else
+    echo "Warning: Resources/AppIcon.png not found; app icon will use the system default."
+fi
+
 if [[ -z "${CODESIGN_IDENTITY:-}" ]]; then
     CODESIGN_IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(Apple Development:[^"]*\)".*/\1/p' | head -n 1)"
 fi
