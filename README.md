@@ -10,6 +10,10 @@ CmdTab is a lightweight macOS app switcher that shows a numbered overlay when yo
 
 Landing page: https://cmd-tab.vercel.app/
 
+<p align="center">
+  <img src="LP/assets/cmdtab-instant-switch.gif" alt="CmdTab instant Space switching demo" width="720">
+</p>
+
 ## Features
 
 - Right Command key app switching overlay
