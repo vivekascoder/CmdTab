@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CmdTab — Opinionated Application Launcher</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-grid">
+    <div class="hero-text">
+      <p class="eyebrow">macOS App Switcher</p>
+      <h1>Opinionated Application Launcher</h1>
+      <p class="subtitle">
+        Press Right <kbd>⌘</kbd> and a number. <strong>One key combo.</strong> Switch to any app instantly.
+      </p>
+      <div class="hero-actions">
+        <a href="#download" class="btn btn-primary">Download for macOS</a>
+        <span class="version">Free &amp; open source</span>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="overlay-mockup" id="overlayMockup">
+        <div class="mockup-app" data-num="1">
+          <div class="mockup-icon safari"></div>
+          <span class="mockup-name">Safari</span>
+          <span class="mockup-num">1</span>
+        </div>
+        <div class="mockup-app" data-num="2">
+          <div class="mockup-icon terminal"></div>
+          <span class="mockup-name">Terminal</span>
+          <span class="mockup-num">2</span>
+        </div>
+        <div class="mockup-app" data-num="3">
+          <div class="mockup-icon finder"></div>
+          <span class="mockup-name">Finder</span>
+          <span class="mockup-num">3</span>
+        </div>
+        <div class="mockup-app" data-num="4">
+          <div class="mockup-icon slack"></div>
+          <span class="mockup-name">Slack</span>
+          <span class="mockup-num">4</span>
+        </div>
+        <div class="mockup-app" data-num="5">
+          <div class="mockup-icon code"></div>
+          <span class="mockup-name">Code</span>
+          <span class="mockup-num">5</span>
+        </div>
+        <div class="mockup-app" data-num="6">
+          <div class="mockup-icon mail"></div>
+          <span class="mockup-name">Mail</span>
+          <span class="mockup-num">6</span>
+        </div>
+        <div class="mockup-app" data-num="7">
+          <div class="mockup-icon music"></div>
+          <span class="mockup-name">Music</span>
+          <span class="mockup-num">7</span>
+        </div>
+        <div class="mockup-app" data-num="8">
+          <div class="mockup-icon notes"></div>
+          <span class="mockup-name">Notes</span>
+          <span class="mockup-num">8</span>
+        </div>
+      </div>
+      <p class="mockup-hint">Hold Right <kbd>⌘</kbd> + press a number</p>
+    </div>
+  </div>
+</header>
+
+<section class="how-it-works">
+  <h2>Two steps. Half a second.</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Hold Right <kbd>⌘</kbd></h3>
+      <p>The overlay appears — a numbered grid of every running app. Your left Command key stays untouched for normal shortcuts.</p>
+    </div>
+    <div class="step-arrow">→</div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Press a number</h3>
+      <p>Hit <kbd>1</kbd>–<kbd>9</kbd> or <kbd>0</kbd> to jump straight to that app. Or click it. That's it — no ⌘⇥ cycling, no searching.</p>
+    </div>
+  </div>
+</section>
+
+<section class="numbers-comparison">
+  <h2>CmdTab vs Cmd+Tab</h2>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th><strong>CmdTab</strong></th>
+        <th>macOS Cmd+Tab</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Keystrokes to reach 7th app</td>
+        <td class="win">2</td>
+        <td>7–14</td>
+      </tr>
+      <tr>
+        <td>Direct access</td>
+        <td class="win">Yes (by number)</td>
+        <td>No (sequential)</td>
+      </tr>
+      <tr>
+        <td>Interferes with left ⌘</td>
+        <td class="win">No</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>Muscle-memory friendly</td>
+        <td class="win">Yes (fixed order)</td>
+        <td>No (MRU order)</td>
+      </tr>
+      <tr>
+        <td>Background apps visible</td>
+        <td class="win">Optional</td>
+        <td>No</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="download" id="download">
+  <h2>Get CmdTab</h2>
+  <div class="download-box">
+    <div class="download-step">
+      <span class="step-badge">1</span>
+      <p><strong>Download</strong> and open the app.</p>
+    </div>
+    <div class="download-step">
+      <span class="step-badge">2</span>
+      <p><strong>Grant Accessibility</strong> permission when prompted.</p>
+    </div>
+    <div class="download-step">
+      <span class="step-badge">3</span>
+      <p>Hold <strong>Right ⌘</strong> and start switching.</p>
+    </div>
+  </div>
+  <div class="download-actions">
+    <a href="https://github.com/user/CmdTab/releases/latest" class="btn btn-primary">Download Latest Release</a>
+    <span class="or">or</span>
+    <a href="https://github.com/user/CmdTab" class="btn btn-secondary">View on GitHub</a>
+  </div>
+  <p class="requirements">Requires macOS 15.0 or later. Built for Apple Silicon and Intel.</p>
+</section>
+
+<footer>
+  <p>CmdTab is free and open source. No tracking. No ads. No nonsense.</p>
+  <p class="footer-meta">Built with Swift and Cocoa. &lt; 200 KB compiled. &mdash; <a href="https://twitter.com/0xstatemachine">@0xstatemachine</a></p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

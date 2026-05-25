@@ -169,6 +169,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return nil
             }
 
+            if let shortcut = eventShortcutCharacter(event),
+               let index = overlayController.index(for: shortcut) {
+                os_log(.debug, log: log, "Shortcut -> index %{public}d", index)
+                isRightCmdDown = false
+                DispatchQueue.main.async { [weak self] in
+                    self?.overlayController.selectApp(at: index) { app in
+                        app.activate()
+                    }
+                }
+                return nil
+            }
+
             return nil
 
         case .keyUp:
@@ -190,5 +202,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         return Unmanaged.passRetained(event)
+    }
+
+    private func eventShortcutCharacter(_ event: CGEvent) -> String? {
+        var length = 0
+        var chars = [UniChar](repeating: 0, count: 4)
+        event.keyboardGetUnicodeString(maxStringLength: chars.count, actualStringLength: &length, unicodeString: &chars)
+        guard length > 0 else { return nil }
+
+        guard let scalar = UnicodeScalar(chars[0]) else { return nil }
+        let character = String(Character(scalar)).lowercased()
+        guard character.rangeOfCharacter(from: CharacterSet.alphanumerics) != nil else { return nil }
+        return character
     }
 }
