@@ -3,6 +3,12 @@ import CoreGraphics
 import OSLog
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    private enum KeyCode {
+        static let escape: Int64 = 53
+        static let rightCommand: Int64 = 54
+        static let leftCommand: Int64 = 55
+    }
+
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var overlayController: OverlayPanelController!
@@ -111,21 +117,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .flagsChanged:
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
 
-            if keyCode == 54 {
-                let cmdNowDown = event.flags.contains(.maskCommand)
+            if keyCode == KeyCode.leftCommand {
+                return Unmanaged.passRetained(event)
+            }
 
-                if cmdNowDown != isRightCmdDown {
-                    isRightCmdDown = cmdNowDown
-                    if cmdNowDown {
-                        os_log(.debug, log: log, "Right Cmd PRESSED")
-                        DispatchQueue.main.async { [weak self] in
-                            self?.overlayController.show()
-                        }
-                    } else {
-                        os_log(.debug, log: log, "Right Cmd RELEASED")
-                        DispatchQueue.main.async { [weak self] in
-                            self?.overlayController.dismiss()
-                        }
+            if keyCode == KeyCode.rightCommand {
+                isRightCmdDown.toggle()
+                if isRightCmdDown {
+                    os_log(.debug, log: log, "Right Cmd PRESSED")
+                    DispatchQueue.main.async { [weak self] in
+                        self?.overlayController.show()
+                    }
+                } else {
+                    os_log(.debug, log: log, "Right Cmd RELEASED")
+                    DispatchQueue.main.async { [weak self] in
+                        self?.overlayController.dismiss()
                     }
                 }
                 return nil
@@ -136,7 +142,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .keyDown:
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
 
-            if keyCode == 54 {
+            if keyCode == KeyCode.rightCommand {
                 if !isRightCmdDown {
                     isRightCmdDown = true
                     os_log(.debug, log: log, "Right Cmd keyDown (fallback)")
@@ -149,7 +155,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             guard isRightCmdDown else { return Unmanaged.passRetained(event) }
 
-            if keyCode == 53 {
+            if keyCode == KeyCode.escape {
                 os_log(.debug, log: log, "Escape — dismissing overlay")
                 isRightCmdDown = false
                 DispatchQueue.main.async { [weak self] in
@@ -181,10 +187,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return nil
             }
 
-            return nil
+            return Unmanaged.passRetained(event)
 
         case .keyUp:
-            if event.getIntegerValueField(.keyboardEventKeycode) == 54 {
+            if event.getIntegerValueField(.keyboardEventKeycode) == KeyCode.rightCommand {
                 os_log(.debug, log: log, "Right Cmd keyUp")
                 if isRightCmdDown {
                     isRightCmdDown = false
@@ -195,7 +201,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return nil
             }
             guard isRightCmdDown else { return Unmanaged.passRetained(event) }
-            return nil
+            return Unmanaged.passRetained(event)
 
         default:
             break
