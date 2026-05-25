@@ -425,7 +425,7 @@ final class OverlayPanelController: NSObject {
 
             numberLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 12),
             numberLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            numberLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 22),
+            numberLabel.widthAnchor.constraint(equalToConstant: 22),
             numberLabel.heightAnchor.constraint(equalToConstant: 22),
 
             iconView.leadingAnchor.constraint(equalTo: numberLabel.trailingAnchor, constant: 12),
@@ -442,7 +442,7 @@ final class OverlayPanelController: NSObject {
                 shortcutLabel.leadingAnchor.constraint(greaterThanOrEqualTo: nameLabel.trailingAnchor, constant: 12),
                 shortcutLabel.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
                 shortcutLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-                shortcutLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 22),
+                shortcutLabel.widthAnchor.constraint(equalToConstant: 22),
                 shortcutLabel.heightAnchor.constraint(equalToConstant: 22),
             ])
         } else {
