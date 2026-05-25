@@ -415,10 +415,19 @@ final class OverlayPanelController: NSObject {
     }
 
     private func keyBadge(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
+        let label = NSTextField(frame: .zero)
+        label.stringValue = text
         label.font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
         label.textColor = NSColor(white: 0.74, alpha: 1.0)
         label.alignment = .center
+        label.cell?.alignment = .center
+        label.cell?.usesSingleLineMode = true
+        label.cell?.lineBreakMode = .byClipping
+        label.isEditable = false
+        label.isSelectable = false
+        label.isBordered = false
+        label.drawsBackground = false
+        label.focusRingType = .none
         label.wantsLayer = true
         label.layer?.backgroundColor = NSColor(white: 1.0, alpha: 0.10).cgColor
         label.layer?.cornerRadius = 6
