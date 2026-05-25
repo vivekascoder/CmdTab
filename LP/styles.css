@@ -130,6 +130,15 @@ a {
   padding: 60px 24px 80px;
 }
 
+.hero-logo {
+  width: 84px;
+  height: 84px;
+  display: block;
+  margin-bottom: 24px;
+  border-radius: 18px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+}
+
 .hero-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

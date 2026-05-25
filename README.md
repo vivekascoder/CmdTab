@@ -1,4 +1,8 @@
-# CmdTab
+<p align="center">
+  <img src="Resources/AppIcon.png" alt="CmdTab logo" width="128" height="128">
+</p>
+
+<h1 align="center">CmdTab</h1>
 
 CmdTab is a lightweight macOS app switcher that shows a numbered overlay when you hold the right Command key. Select apps with number keys, or assign custom character shortcuts for specific apps.
 
