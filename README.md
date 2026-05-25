@@ -1,5 +1,7 @@
 <p align="center">
   <img src="Resources/AppIcon.png" alt="CmdTab logo" width="128" height="128">
+  <br>
+  <img src="Resources/cmdtab-demo.gif" alt="CmdTab app switcher demo" width="640">
 </p>
 
 <h1 align="center">CmdTab</h1>
