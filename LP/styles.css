@@ -353,6 +353,34 @@ a {
   font-weight: 600;
 }
 
+/* Space switching */
+
+.space-switching {
+  max-width: 860px;
+  padding-top: 42px;
+  padding-bottom: 42px;
+}
+
+.space-switching-copy {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 34px;
+}
+
+.space-switching h2 {
+  text-align: left;
+  margin-bottom: 14px;
+}
+
+.space-switching .eyebrow {
+  margin-bottom: 10px;
+}
+
+.space-switching p:last-child {
+  max-width: 640px;
+}
+
 /* Download */
 
 .download {

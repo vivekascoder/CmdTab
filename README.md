@@ -14,6 +14,7 @@ Landing page: https://cmd-tab.vercel.app/
 
 - Right Command key app switching overlay
 - Block and list overlay layouts
+- Optional instant Space switching when selecting apps on another desktop
 - Ignore list for hiding specific apps from the overlay
 - Per-app character shortcuts, such as `o` for Obsidian
 - Menu bar settings app

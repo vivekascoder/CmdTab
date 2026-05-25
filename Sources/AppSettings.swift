@@ -13,6 +13,14 @@ final class AppSettings {
         }
     }
 
+    var instantSpaceSwitching: Bool {
+        get { defaults.bool(forKey: "instantSpaceSwitching") }
+        set {
+            defaults.set(newValue, forKey: "instantSpaceSwitching")
+            NotificationCenter.default.post(name: .settingsChanged, object: nil)
+        }
+    }
+
     var panelAppearance: String {
         get { defaults.string(forKey: "panelAppearance") ?? "auto" }
         set {
@@ -101,6 +109,7 @@ final class AppSettings {
     private init() {
         defaults.register(defaults: [
             "showBackgroundApps": false,
+            "instantSpaceSwitching": false,
             "panelAppearance": "dark",
             "overlayLayoutMode": "list",
             "overlayBackgroundColor": "#0A0A0A",

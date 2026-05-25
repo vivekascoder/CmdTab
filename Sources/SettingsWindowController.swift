@@ -3,6 +3,7 @@ import ServiceManagement
 
 final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, NSSearchFieldDelegate {
     private var showBackgroundAppsCheckbox: NSButton!
+    private var instantSpaceSwitchingCheckbox: NSButton!
     private var launchAtLoginCheckbox: NSButton!
     private var appearancePopup: NSPopUpButton!
     private var layoutModePopup: NSPopUpButton!
@@ -93,6 +94,21 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
             title: "Show background apps",
             detail: nil,
             control: trailingControls(showBackgroundAppsCheckbox, backgroundAppsHelp)
+        ))
+
+        instantSpaceSwitchingCheckbox = NSButton(
+            checkboxWithTitle: "",
+            target: self,
+            action: #selector(instantSpaceSwitchingToggled)
+        )
+        instantSpaceSwitchingCheckbox.state = AppSettings.shared.instantSpaceSwitching ? .on : .off
+        let instantSwitchingHelp = NSButton(title: "", target: nil, action: nil)
+        instantSwitchingHelp.bezelStyle = .helpButton
+        instantSwitchingHelp.toolTip = "When selecting an app on another Space, CmdTab will try to switch Spaces with a synthetic high-velocity Dock swipe before activating the app."
+        stack.addArrangedSubview(settingCard(
+            title: "Instant Space switching",
+            detail: nil,
+            control: trailingControls(instantSpaceSwitchingCheckbox, instantSwitchingHelp)
         ))
 
         launchAtLoginCheckbox = NSButton(
@@ -503,6 +519,11 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
 
     @objc private func backgroundAppsToggled() {
         AppSettings.shared.showBackgroundApps = (showBackgroundAppsCheckbox.state == .on)
+        onSettingsChanged?()
+    }
+
+    @objc private func instantSpaceSwitchingToggled() {
+        AppSettings.shared.instantSpaceSwitching = (instantSpaceSwitchingCheckbox.state == .on)
         onSettingsChanged?()
     }
 

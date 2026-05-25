@@ -18,6 +18,7 @@ swiftc \
     -o "${MACOS_DIR}/${APP_NAME}" \
     Sources/main.swift \
     Sources/AppSettings.swift \
+    Sources/InstantSpaceSwitcher.swift \
     Sources/AppBlockView.swift \
     Sources/AppDelegate.swift \
     Sources/StatusBarController.swift \

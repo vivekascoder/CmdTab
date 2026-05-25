@@ -178,7 +178,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 suppressRightCmdUntilRelease = true
                 DispatchQueue.main.async { [weak self] in
                     self?.overlayController.selectApp(at: index) { app in
-                        app.activate()
+                        InstantSpaceSwitcher.activate(app)
                     }
                 }
                 return nil
@@ -190,7 +190,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 suppressRightCmdUntilRelease = true
                 DispatchQueue.main.async { [weak self] in
                     self?.overlayController.selectApp(at: index) { app in
-                        app.activate()
+                        InstantSpaceSwitcher.activate(app)
                     }
                 }
                 return nil

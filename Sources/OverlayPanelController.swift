@@ -338,7 +338,7 @@ final class OverlayPanelController: NSObject {
                 let block = AppBlockView(app: app, displayNumber: displayNum)
                 block.onClick = { [weak self] in
                     self?.hide()
-                    app.activate()
+                    InstantSpaceSwitcher.activate(app)
                 }
                 row.addArrangedSubview(makeGridCell(containing: block))
                 blockViews.append(block)
@@ -508,6 +508,6 @@ final class OverlayPanelController: NSObject {
 
         let app = appEntries[index]
         hide()
-        app.activate()
+        InstantSpaceSwitcher.activate(app)
     }
 }
