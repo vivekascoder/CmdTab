@@ -26,6 +26,7 @@ swiftc \
     -framework Cocoa \
     -framework ApplicationServices \
     -framework CoreGraphics \
+    -framework ServiceManagement \
     -O
 
 cp Resources/Info.plist "${BUNDLE_DIR}/Contents/"

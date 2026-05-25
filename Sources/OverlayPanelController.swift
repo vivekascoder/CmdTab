@@ -116,6 +116,7 @@ final class OverlayPanelController: NSObject {
     private var panel: NSPanel?
     private var gridView: NSStackView?
     private var tintView: NSView?
+    private var titleLabel: NSTextField?
     private var appEntries: [NSRunningApplication] = []
     private var blockViews: [AppBlockView] = []
     var isVisible: Bool { panel?.isVisible ?? false }
@@ -250,6 +251,13 @@ final class OverlayPanelController: NSObject {
         grid.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(grid)
 
+        let titleLabel = NSTextField(labelWithString: "CmdTab")
+        titleLabel.font = NSFont.systemFont(ofSize: 15, weight: .semibold)
+        titleLabel.textColor = NSColor(white: 0.82, alpha: 1.0)
+        titleLabel.alignment = .center
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(titleLabel)
+
         NSLayoutConstraint.activate([
             blurView.topAnchor.constraint(equalTo: contentView.topAnchor),
             blurView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -261,16 +269,20 @@ final class OverlayPanelController: NSObject {
             tintView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             tintView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
 
-            grid.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 34),
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 22),
+            titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+
+            grid.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 18),
             grid.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 34),
             grid.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -34),
-            grid.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -34),
+            grid.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -36),
         ])
 
         panel.contentView = contentView
         self.panel = panel
         self.gridView = grid
         self.tintView = tintView
+        self.titleLabel = titleLabel
     }
 
     private func refreshContent() {
@@ -336,7 +348,7 @@ final class OverlayPanelController: NSObject {
         }
 
         let hPadding: CGFloat = 68
-        let vPadding: CGFloat = 68
+        let vPadding: CGFloat = 92
         let cols = rowCount > 1 ? maxCols : actualCols
         let panelW = CGFloat(cols) * blockW + CGFloat(cols - 1) * blockGap + hPadding
         let panelH = CGFloat(rowCount) * blockH + CGFloat(max(rowCount - 1, 0)) * blockGap + vPadding
@@ -368,7 +380,7 @@ final class OverlayPanelController: NSObject {
         }
 
         let hPadding: CGFloat = 68
-        let vPadding: CGFloat = 68
+        let vPadding: CGFloat = 92
         let rowGaps = max(count - 1, 0)
         let panelW = listW + hPadding
         let panelH = CGFloat(count) * listRowH + CGFloat(rowGaps) * grid.spacing + vPadding

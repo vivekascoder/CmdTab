@@ -1,7 +1,9 @@
 import Cocoa
+import ServiceManagement
 
 final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, NSSearchFieldDelegate {
     private var showBackgroundAppsCheckbox: NSButton!
+    private var launchAtLoginCheckbox: NSButton!
     private var appearancePopup: NSPopUpButton!
     private var layoutModePopup: NSPopUpButton!
     private var backgroundColorWell: NSColorWell!
@@ -91,6 +93,18 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
             title: "Show background apps",
             detail: nil,
             control: trailingControls(showBackgroundAppsCheckbox, backgroundAppsHelp)
+        ))
+
+        launchAtLoginCheckbox = NSButton(
+            checkboxWithTitle: "",
+            target: self,
+            action: #selector(launchAtLoginToggled)
+        )
+        launchAtLoginCheckbox.state = SMAppService.mainApp.status == .enabled ? .on : .off
+        stack.addArrangedSubview(settingCard(
+            title: "Start at login",
+            detail: nil,
+            control: launchAtLoginCheckbox
         ))
 
         appearancePopup = NSPopUpButton()
@@ -339,8 +353,6 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         row.addSubview(control)
 
         var constraints: [NSLayoutConstraint] = [
-            row.heightAnchor.constraint(greaterThanOrEqualToConstant: 56),
-
             titleLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 14),
 
             control.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
@@ -356,6 +368,7 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
             row.addSubview(detailLabel)
 
             constraints.append(contentsOf: [
+                row.heightAnchor.constraint(greaterThanOrEqualToConstant: 54),
                 titleLabel.topAnchor.constraint(equalTo: row.topAnchor, constant: 10),
                 detailLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
                 detailLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
@@ -364,6 +377,7 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
             ])
         } else {
             constraints.append(contentsOf: [
+                row.heightAnchor.constraint(equalToConstant: 44),
                 titleLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
                 control.leadingAnchor.constraint(greaterThanOrEqualTo: titleLabel.trailingAnchor, constant: 12),
             ])
@@ -468,6 +482,19 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
     @objc private func backgroundAppsToggled() {
         AppSettings.shared.showBackgroundApps = (showBackgroundAppsCheckbox.state == .on)
         onSettingsChanged?()
+    }
+
+    @objc private func launchAtLoginToggled() {
+        do {
+            if launchAtLoginCheckbox.state == .on {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+        } catch {
+            launchAtLoginCheckbox.state = SMAppService.mainApp.status == .enabled ? .on : .off
+            NSAlert(error: error).runModal()
+        }
     }
 
     @objc private func appearanceChanged() {
