@@ -79,12 +79,19 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         stack.addArrangedSubview(headerLabel)
 
         showBackgroundAppsCheckbox = NSButton(
-            checkboxWithTitle: "Show background applications in overlay",
+            checkboxWithTitle: "",
             target: self,
             action: #selector(backgroundAppsToggled)
         )
         showBackgroundAppsCheckbox.state = AppSettings.shared.showBackgroundApps ? .on : .off
-        stack.addArrangedSubview(settingCard(title: "Show background apps", detail: "Include background applications in the overlay.", control: showBackgroundAppsCheckbox))
+        let backgroundAppsHelp = NSButton(title: "", target: nil, action: nil)
+        backgroundAppsHelp.bezelStyle = .helpButton
+        backgroundAppsHelp.toolTip = "Include background applications in the overlay."
+        stack.addArrangedSubview(settingCard(
+            title: "Show background apps",
+            detail: nil,
+            control: trailingControls(showBackgroundAppsCheckbox, backgroundAppsHelp)
+        ))
 
         appearancePopup = NSPopUpButton()
         appearancePopup.addItems(withTitles: ["Auto", "Dark", "Light"])
@@ -320,7 +327,7 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         return outer
     }
 
-    private func settingCard(title: String, detail: String, control: NSView) -> NSView {
+    private func settingCard(title: String, detail: String?, control: NSView) -> NSView {
         let row = baseCardRow()
 
         let titleLabel = NSTextField(labelWithString: title)
@@ -328,32 +335,51 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         row.addSubview(titleLabel)
 
-        let detailLabel = NSTextField(labelWithString: detail)
-        detailLabel.font = NSFont.systemFont(ofSize: 12)
-        detailLabel.textColor = .secondaryLabelColor
-        detailLabel.lineBreakMode = .byTruncatingTail
-        detailLabel.translatesAutoresizingMaskIntoConstraints = false
-        row.addSubview(detailLabel)
-
         control.translatesAutoresizingMaskIntoConstraints = false
         row.addSubview(control)
 
-        NSLayoutConstraint.activate([
+        var constraints: [NSLayoutConstraint] = [
             row.heightAnchor.constraint(greaterThanOrEqualToConstant: 56),
 
             titleLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 14),
-            titleLabel.topAnchor.constraint(equalTo: row.topAnchor, constant: 10),
 
-            detailLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            detailLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
-            detailLabel.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -10),
-
-            control.leadingAnchor.constraint(greaterThanOrEqualTo: detailLabel.trailingAnchor, constant: 12),
             control.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
             control.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-        ])
+        ]
+
+        if let detail, !detail.isEmpty {
+            let detailLabel = NSTextField(labelWithString: detail)
+            detailLabel.font = NSFont.systemFont(ofSize: 12)
+            detailLabel.textColor = .secondaryLabelColor
+            detailLabel.lineBreakMode = .byTruncatingTail
+            detailLabel.translatesAutoresizingMaskIntoConstraints = false
+            row.addSubview(detailLabel)
+
+            constraints.append(contentsOf: [
+                titleLabel.topAnchor.constraint(equalTo: row.topAnchor, constant: 10),
+                detailLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+                detailLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
+                detailLabel.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -10),
+                control.leadingAnchor.constraint(greaterThanOrEqualTo: detailLabel.trailingAnchor, constant: 12),
+            ])
+        } else {
+            constraints.append(contentsOf: [
+                titleLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+                control.leadingAnchor.constraint(greaterThanOrEqualTo: titleLabel.trailingAnchor, constant: 12),
+            ])
+        }
+
+        NSLayoutConstraint.activate(constraints)
 
         return row
+    }
+
+    private func trailingControls(_ views: NSView...) -> NSView {
+        let stack = NSStackView(views: views)
+        stack.orientation = .horizontal
+        stack.spacing = 8
+        stack.alignment = .centerY
+        return stack
     }
 
     private func linkCard(title: String, detail: String, url: String) -> NSView {
