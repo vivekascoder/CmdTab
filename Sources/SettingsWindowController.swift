@@ -1,6 +1,6 @@
 import Cocoa
 
-final class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
+final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, NSSearchFieldDelegate {
     private var showBackgroundAppsCheckbox: NSButton!
     private var appearancePopup: NSPopUpButton!
     private var layoutModePopup: NSPopUpButton!
@@ -9,17 +9,24 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
     private var openAccessibilityButton: NSButton!
     private var ignoreButtons: [NSButton: String] = [:]
     private var shortcutFields: [NSTextField: String] = [:]
+    private var ignoreSearchField: NSSearchField!
+    private var shortcutsSearchField: NSSearchField!
+    private var ignoreBackgroundAppsCheckbox: NSButton!
+    private var shortcutsBackgroundAppsCheckbox: NSButton!
+    private var ignoreListStack: NSStackView!
+    private var shortcutsListStack: NSStackView!
 
     var onSettingsChanged: (() -> Void)?
 
     convenience init() {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 520, height: 430),
-            styleMask: [.titled, .closable, .miniaturizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         window.title = "CmdTab Settings"
+        window.minSize = NSSize(width: 500, height: 360)
         window.titlebarAppearsTransparent = false
         self.init(window: window)
         buildUI()
@@ -60,35 +67,26 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
     }
 
     private func buildGeneralTab() -> NSView {
-        let container = NSView()
+        let stack = NSStackView()
+        stack.orientation = .vertical
+        stack.spacing = 14
+        stack.alignment = .width
+
         let headerLabel = NSTextField(labelWithString: "Appearance")
         headerLabel.font = NSFont.boldSystemFont(ofSize: 13)
         headerLabel.textColor = NSColor.secondaryLabelColor
-        headerLabel.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(headerLabel)
-
-        let showBgLabel = NSTextField(labelWithString: "Show background applications:")
-        showBgLabel.font = NSFont.systemFont(ofSize: 13)
-        showBgLabel.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(showBgLabel)
+        stack.addArrangedSubview(headerLabel)
 
         showBackgroundAppsCheckbox = NSButton(
-            checkboxWithTitle: "",
+            checkboxWithTitle: "Show background applications in overlay",
             target: self,
             action: #selector(backgroundAppsToggled)
         )
-        showBackgroundAppsCheckbox.translatesAutoresizingMaskIntoConstraints = false
         showBackgroundAppsCheckbox.state = AppSettings.shared.showBackgroundApps ? .on : .off
-        container.addSubview(showBackgroundAppsCheckbox)
-
-        let appearanceLabel = NSTextField(labelWithString: "Panel appearance:")
-        appearanceLabel.font = NSFont.systemFont(ofSize: 13)
-        appearanceLabel.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(appearanceLabel)
+        stack.addArrangedSubview(showBackgroundAppsCheckbox)
 
         appearancePopup = NSPopUpButton()
         appearancePopup.addItems(withTitles: ["Auto", "Dark", "Light"])
-        appearancePopup.translatesAutoresizingMaskIntoConstraints = false
         appearancePopup.target = self
         appearancePopup.action = #selector(appearanceChanged)
 
@@ -97,50 +95,38 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
         case "light": appearancePopup.selectItem(at: 2)
         default: appearancePopup.selectItem(at: 0)
         }
-        container.addSubview(appearancePopup)
-
-        let layoutModeLabel = NSTextField(labelWithString: "Overlay layout:")
-        layoutModeLabel.font = NSFont.systemFont(ofSize: 13)
-        layoutModeLabel.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(layoutModeLabel)
+        stack.addArrangedSubview(settingsRow(label: "Panel appearance:", control: appearancePopup))
 
         layoutModePopup = NSPopUpButton()
         layoutModePopup.addItems(withTitles: ["Blocks", "List"])
-        layoutModePopup.translatesAutoresizingMaskIntoConstraints = false
         layoutModePopup.target = self
         layoutModePopup.action = #selector(layoutModeChanged)
         layoutModePopup.selectItem(at: AppSettings.shared.overlayLayoutMode == "list" ? 1 : 0)
-        container.addSubview(layoutModePopup)
-
-        let backgroundColorLabel = NSTextField(labelWithString: "Background color:")
-        backgroundColorLabel.font = NSFont.systemFont(ofSize: 13)
-        backgroundColorLabel.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(backgroundColorLabel)
+        stack.addArrangedSubview(settingsRow(label: "Overlay layout:", control: layoutModePopup))
 
         backgroundColorWell = NSColorWell()
         backgroundColorWell.color = AppSettings.shared.overlayBackgroundColor
         backgroundColorWell.target = self
         backgroundColorWell.action = #selector(backgroundColorChanged)
-        backgroundColorWell.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(backgroundColorWell)
+        backgroundColorWell.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        stack.addArrangedSubview(settingsRow(label: "Background color:", control: backgroundColorWell))
 
         let separator = NSBox()
         separator.boxType = .separator
         separator.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(separator)
+        stack.addArrangedSubview(separator)
 
         let permHeader = NSTextField(labelWithString: "Permissions")
         permHeader.font = NSFont.boldSystemFont(ofSize: 13)
         permHeader.textColor = NSColor.secondaryLabelColor
-        permHeader.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(permHeader)
+        stack.addArrangedSubview(permHeader)
 
         accessibilityStatusLabel = NSTextField(labelWithString: "Checking…")
         accessibilityStatusLabel.font = NSFont.systemFont(ofSize: 12)
         accessibilityStatusLabel.textColor = NSColor.secondaryLabelColor
         accessibilityStatusLabel.lineBreakMode = .byWordWrapping
-        accessibilityStatusLabel.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(accessibilityStatusLabel)
+        accessibilityStatusLabel.maximumNumberOfLines = 0
+        stack.addArrangedSubview(accessibilityStatusLabel)
 
         openAccessibilityButton = NSButton(
             title: "Open Accessibility Settings",
@@ -148,71 +134,87 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
             action: #selector(openAccessibilitySettings)
         )
         openAccessibilityButton.bezelStyle = .rounded
-        openAccessibilityButton.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(openAccessibilityButton)
+        stack.addArrangedSubview(openAccessibilityButton)
 
-        NSLayoutConstraint.activate([
-            headerLabel.topAnchor.constraint(equalTo: container.topAnchor),
-            headerLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-
-            showBgLabel.topAnchor.constraint(equalTo: headerLabel.bottomAnchor, constant: 14),
-            showBgLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-
-            showBackgroundAppsCheckbox.centerYAnchor.constraint(equalTo: showBgLabel.centerYAnchor),
-            showBackgroundAppsCheckbox.leadingAnchor.constraint(equalTo: showBgLabel.trailingAnchor, constant: 6),
-
-            appearanceLabel.topAnchor.constraint(equalTo: showBgLabel.bottomAnchor, constant: 14),
-            appearanceLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-
-            appearancePopup.centerYAnchor.constraint(equalTo: appearanceLabel.centerYAnchor),
-            appearancePopup.leadingAnchor.constraint(equalTo: appearanceLabel.trailingAnchor, constant: 8),
-
-            layoutModeLabel.topAnchor.constraint(equalTo: appearanceLabel.bottomAnchor, constant: 14),
-            layoutModeLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-
-            layoutModePopup.centerYAnchor.constraint(equalTo: layoutModeLabel.centerYAnchor),
-            layoutModePopup.leadingAnchor.constraint(equalTo: layoutModeLabel.trailingAnchor, constant: 8),
-
-            backgroundColorLabel.topAnchor.constraint(equalTo: layoutModeLabel.bottomAnchor, constant: 14),
-            backgroundColorLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-
-            backgroundColorWell.centerYAnchor.constraint(equalTo: backgroundColorLabel.centerYAnchor),
-            backgroundColorWell.leadingAnchor.constraint(equalTo: backgroundColorLabel.trailingAnchor, constant: 8),
-            backgroundColorWell.widthAnchor.constraint(equalToConstant: 44),
-
-            separator.topAnchor.constraint(equalTo: backgroundColorLabel.bottomAnchor, constant: 20),
-            separator.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            separator.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-
-            permHeader.topAnchor.constraint(equalTo: separator.bottomAnchor, constant: 14),
-            permHeader.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-
-            accessibilityStatusLabel.topAnchor.constraint(equalTo: permHeader.bottomAnchor, constant: 8),
-            accessibilityStatusLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            accessibilityStatusLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-
-            openAccessibilityButton.topAnchor.constraint(equalTo: accessibilityStatusLabel.bottomAnchor, constant: 12),
-            openAccessibilityButton.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-        ])
-
-        return paddedScrollView(containing: container)
+        return paddedScrollView(containing: stack)
     }
 
     private func buildIgnoreListTab() -> NSView {
+        let stack = appListContainer(
+            searchField: &ignoreSearchField,
+            backgroundAppsCheckbox: &ignoreBackgroundAppsCheckbox,
+            listStack: &ignoreListStack,
+            searchAction: #selector(ignoreSearchChanged),
+            backgroundAction: #selector(ignoreBackgroundAppsToggled)
+        )
+        reloadIgnoreList()
+        return paddedScrollView(containing: stack)
+    }
+
+    private func buildShortcutsTab() -> NSView {
+        let stack = appListContainer(
+            searchField: &shortcutsSearchField,
+            backgroundAppsCheckbox: &shortcutsBackgroundAppsCheckbox,
+            listStack: &shortcutsListStack,
+            searchAction: #selector(shortcutsSearchChanged),
+            backgroundAction: #selector(shortcutsBackgroundAppsToggled)
+        )
+        reloadShortcutsList()
+        return paddedScrollView(containing: stack)
+    }
+
+    private func appListContainer(
+        searchField: inout NSSearchField!,
+        backgroundAppsCheckbox: inout NSButton!,
+        listStack: inout NSStackView!,
+        searchAction: Selector,
+        backgroundAction: Selector
+    ) -> NSStackView {
+        let container = NSStackView()
+        container.orientation = .vertical
+        container.spacing = 12
+        container.alignment = .width
+
+        searchField = NSSearchField()
+        searchField.placeholderString = "Search applications"
+        searchField.target = self
+        searchField.action = searchAction
+        searchField.delegate = self
+        container.addArrangedSubview(searchField)
+
+        backgroundAppsCheckbox = NSButton(
+            checkboxWithTitle: "Show background applications",
+            target: self,
+            action: backgroundAction
+        )
+        container.addArrangedSubview(backgroundAppsCheckbox)
+
+        listStack = NSStackView()
+        listStack.orientation = .vertical
+        listStack.spacing = 8
+        listStack.alignment = .width
+        container.addArrangedSubview(listStack)
+
+        return container
+    }
+
+    private func reloadIgnoreList() {
+        guard let ignoreListStack else { return }
         ignoreButtons.removeAll()
+        ignoreListStack.arrangedSubviews.forEach { view in
+            ignoreListStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
 
-        let stack = NSStackView()
-        stack.orientation = .vertical
-        stack.spacing = 8
-        stack.alignment = .width
-        stack.translatesAutoresizingMaskIntoConstraints = false
-
-        let apps = settingsApplications()
+        let apps = settingsApplications(
+            includeBackground: ignoreBackgroundAppsCheckbox?.state == .on,
+            query: ignoreSearchField?.stringValue ?? ""
+        )
         for app in apps {
             guard let bundleID = app.bundleIdentifier else { continue }
 
             let checkbox = NSButton(
-                checkboxWithTitle: app.localizedName ?? bundleID,
+                checkboxWithTitle: "",
                 target: self,
                 action: #selector(ignoreAppToggled(_:))
             )
@@ -222,26 +224,26 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
             ignoreButtons[checkbox] = bundleID
 
             let row = appRow(app: app, trailingView: checkbox)
-            stack.addArrangedSubview(row)
+            ignoreListStack.addArrangedSubview(row)
         }
 
-        if stack.arrangedSubviews.isEmpty {
-            stack.addArrangedSubview(emptyLabel("No running applications available."))
+        if ignoreListStack.arrangedSubviews.isEmpty {
+            ignoreListStack.addArrangedSubview(emptyLabel("No matching applications."))
         }
-
-        return paddedScrollView(containing: stack)
     }
 
-    private func buildShortcutsTab() -> NSView {
+    private func reloadShortcutsList() {
+        guard let shortcutsListStack else { return }
         shortcutFields.removeAll()
+        shortcutsListStack.arrangedSubviews.forEach { view in
+            shortcutsListStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
 
-        let stack = NSStackView()
-        stack.orientation = .vertical
-        stack.spacing = 8
-        stack.alignment = .width
-        stack.translatesAutoresizingMaskIntoConstraints = false
-
-        let apps = settingsApplications()
+        let apps = settingsApplications(
+            includeBackground: shortcutsBackgroundAppsCheckbox?.state == .on,
+            query: shortcutsSearchField?.stringValue ?? ""
+        )
         for app in apps {
             guard let bundleID = app.bundleIdentifier else { continue }
 
@@ -257,14 +259,12 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
             shortcutFields[field] = bundleID
 
             let row = appRow(app: app, trailingView: field)
-            stack.addArrangedSubview(row)
+            shortcutsListStack.addArrangedSubview(row)
         }
 
-        if stack.arrangedSubviews.isEmpty {
-            stack.addArrangedSubview(emptyLabel("No running applications available."))
+        if shortcutsListStack.arrangedSubviews.isEmpty {
+            shortcutsListStack.addArrangedSubview(emptyLabel("No matching applications."))
         }
-
-        return paddedScrollView(containing: stack)
     }
 
     private func paddedScrollView(containing documentView: NSView) -> NSView {
@@ -296,6 +296,22 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
         ])
 
         return outer
+    }
+
+    private func settingsRow(label: String, control: NSView) -> NSView {
+        let row = NSStackView()
+        row.orientation = .horizontal
+        row.spacing = 10
+        row.alignment = .centerY
+
+        let labelView = NSTextField(labelWithString: label)
+        labelView.font = NSFont.systemFont(ofSize: 13)
+        labelView.alignment = .right
+        labelView.widthAnchor.constraint(equalToConstant: 150).isActive = true
+
+        row.addArrangedSubview(labelView)
+        row.addArrangedSubview(control)
+        return row
     }
 
     private func appRow(app: NSRunningApplication, trailingView: NSView) -> NSView {
@@ -346,12 +362,25 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
         return label
     }
 
-    private func settingsApplications() -> [NSRunningApplication] {
-        NSWorkspace.shared.runningApplications
+    private func settingsApplications(includeBackground: Bool, query: String) -> [NSRunningApplication] {
+        let normalizedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        return NSWorkspace.shared.runningApplications
             .filter { app in
-                app.bundleURL != nil &&
-                app.bundleIdentifier != nil &&
-                app.processIdentifier != ProcessInfo.processInfo.processIdentifier
+                guard app.bundleURL != nil,
+                      app.bundleIdentifier != nil,
+                      app.processIdentifier != ProcessInfo.processInfo.processIdentifier else {
+                    return false
+                }
+
+                if !includeBackground && app.activationPolicy != .regular {
+                    return false
+                }
+
+                guard !normalizedQuery.isEmpty else { return true }
+                let name = app.localizedName?.lowercased() ?? ""
+                let bundleID = app.bundleIdentifier?.lowercased() ?? ""
+                return name.contains(normalizedQuery) || bundleID.contains(normalizedQuery)
             }
             .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
     }
@@ -386,7 +415,33 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
         onSettingsChanged?()
     }
 
+    @objc private func ignoreSearchChanged() {
+        reloadIgnoreList()
+    }
+
+    @objc private func shortcutsSearchChanged() {
+        reloadShortcutsList()
+    }
+
+    @objc private func ignoreBackgroundAppsToggled() {
+        reloadIgnoreList()
+    }
+
+    @objc private func shortcutsBackgroundAppsToggled() {
+        reloadShortcutsList()
+    }
+
     func controlTextDidChange(_ obj: Notification) {
+        if obj.object as? NSSearchField === ignoreSearchField {
+            reloadIgnoreList()
+            return
+        }
+
+        if obj.object as? NSSearchField === shortcutsSearchField {
+            reloadShortcutsList()
+            return
+        }
+
         guard let field = obj.object as? NSTextField,
               let bundleID = shortcutFields[field] else { return }
 
