@@ -5,7 +5,7 @@ private let blockH: CGFloat = 134
 private let blockGap: CGFloat = 12
 private let maxCols = 4
 private let listRowH: CGFloat = 48
-private let listW: CGFloat = 420
+private let listW: CGFloat = 360
 private let overlayCornerRadius: CGFloat = 38
 
 private final class RoundedVisualEffectView: NSVisualEffectView {
@@ -387,10 +387,10 @@ final class OverlayPanelController: NSObject {
 
             numberLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 12),
             numberLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            numberLabel.widthAnchor.constraint(equalToConstant: 32),
-            numberLabel.heightAnchor.constraint(equalToConstant: 28),
+            numberLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 22),
+            numberLabel.heightAnchor.constraint(equalToConstant: 22),
 
-            iconView.leadingAnchor.constraint(equalTo: numberLabel.trailingAnchor, constant: 10),
+            iconView.leadingAnchor.constraint(equalTo: numberLabel.trailingAnchor, constant: 12),
             iconView.centerYAnchor.constraint(equalTo: row.centerYAnchor),
             iconView.widthAnchor.constraint(equalToConstant: 28),
             iconView.heightAnchor.constraint(equalToConstant: 28),
@@ -404,8 +404,8 @@ final class OverlayPanelController: NSObject {
                 shortcutLabel.leadingAnchor.constraint(greaterThanOrEqualTo: nameLabel.trailingAnchor, constant: 12),
                 shortcutLabel.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
                 shortcutLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-                shortcutLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 32),
-                shortcutLabel.heightAnchor.constraint(equalToConstant: 28),
+                shortcutLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 22),
+                shortcutLabel.heightAnchor.constraint(equalToConstant: 22),
             ])
         } else {
             nameLabel.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12).isActive = true
@@ -416,13 +416,15 @@ final class OverlayPanelController: NSObject {
 
     private func keyBadge(_ text: String) -> NSTextField {
         let label = NSTextField(labelWithString: text)
-        label.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .bold)
+        label.font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
         label.textColor = NSColor(white: 0.74, alpha: 1.0)
         label.alignment = .center
         label.wantsLayer = true
         label.layer?.backgroundColor = NSColor(white: 1.0, alpha: 0.10).cgColor
-        label.layer?.cornerRadius = 7
+        label.layer?.cornerRadius = 6
         label.layer?.cornerCurve = .continuous
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }
