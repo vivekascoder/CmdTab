@@ -57,6 +57,7 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         tabView.addTabViewItem(tabItem(title: "General", view: buildGeneralTab()))
         tabView.addTabViewItem(tabItem(title: "Ignore List", view: buildIgnoreListTab()))
         tabView.addTabViewItem(tabItem(title: "Shortcuts", view: buildShortcutsTab()))
+        tabView.addTabViewItem(tabItem(title: "About", view: buildAboutTab()))
     }
 
     private func tabItem(title: String, view: NSView) -> NSTabViewItem {
@@ -83,7 +84,7 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
             action: #selector(backgroundAppsToggled)
         )
         showBackgroundAppsCheckbox.state = AppSettings.shared.showBackgroundApps ? .on : .off
-        stack.addArrangedSubview(showBackgroundAppsCheckbox)
+        stack.addArrangedSubview(settingCard(title: "Show background apps", detail: "Include background applications in the overlay.", control: showBackgroundAppsCheckbox))
 
         appearancePopup = NSPopUpButton()
         appearancePopup.addItems(withTitles: ["Auto", "Dark", "Light"])
@@ -95,21 +96,21 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         case "light": appearancePopup.selectItem(at: 2)
         default: appearancePopup.selectItem(at: 0)
         }
-        stack.addArrangedSubview(settingsRow(label: "Panel appearance:", control: appearancePopup))
+        stack.addArrangedSubview(settingCard(title: "Panel appearance", detail: "Choose how the overlay follows system appearance.", control: appearancePopup))
 
         layoutModePopup = NSPopUpButton()
         layoutModePopup.addItems(withTitles: ["Blocks", "List"])
         layoutModePopup.target = self
         layoutModePopup.action = #selector(layoutModeChanged)
         layoutModePopup.selectItem(at: AppSettings.shared.overlayLayoutMode == "list" ? 1 : 0)
-        stack.addArrangedSubview(settingsRow(label: "Overlay layout:", control: layoutModePopup))
+        stack.addArrangedSubview(settingCard(title: "Overlay layout", detail: "Switch between block grid and compact list modes.", control: layoutModePopup))
 
         backgroundColorWell = NSColorWell()
         backgroundColorWell.color = AppSettings.shared.overlayBackgroundColor
         backgroundColorWell.target = self
         backgroundColorWell.action = #selector(backgroundColorChanged)
         backgroundColorWell.widthAnchor.constraint(equalToConstant: 44).isActive = true
-        stack.addArrangedSubview(settingsRow(label: "Background color:", control: backgroundColorWell))
+        stack.addArrangedSubview(settingCard(title: "Background color", detail: "Tint used behind the overlay content.", control: backgroundColorWell))
 
         let separator = NSBox()
         separator.boxType = .separator
@@ -126,7 +127,7 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         accessibilityStatusLabel.textColor = NSColor.secondaryLabelColor
         accessibilityStatusLabel.lineBreakMode = .byWordWrapping
         accessibilityStatusLabel.maximumNumberOfLines = 0
-        stack.addArrangedSubview(accessibilityStatusLabel)
+        stack.addArrangedSubview(settingCard(title: "Accessibility", detail: "Required to monitor the right Command key.", control: accessibilityStatusLabel))
 
         openAccessibilityButton = NSButton(
             title: "Open Accessibility Settings",
@@ -135,6 +136,27 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         )
         openAccessibilityButton.bezelStyle = .rounded
         stack.addArrangedSubview(openAccessibilityButton)
+
+        return paddedScrollView(containing: stack)
+    }
+
+    private func buildAboutTab() -> NSView {
+        let stack = NSStackView()
+        stack.orientation = .vertical
+        stack.spacing = 12
+        stack.alignment = .width
+
+        let title = NSTextField(labelWithString: "CmdTab")
+        title.font = NSFont.boldSystemFont(ofSize: 18)
+        stack.addArrangedSubview(title)
+
+        let description = NSTextField(labelWithString: "A lightweight macOS app switcher for the right Command key.")
+        description.textColor = .secondaryLabelColor
+        description.font = NSFont.systemFont(ofSize: 13)
+        stack.addArrangedSubview(description)
+
+        stack.addArrangedSubview(linkCard(title: "Website", detail: "vivek.ink", url: "https://vivek.ink"))
+        stack.addArrangedSubview(linkCard(title: "Twitter", detail: "0xstatemachine", url: "https://twitter.com/0xstatemachine"))
 
         return paddedScrollView(containing: stack)
     }
@@ -298,28 +320,60 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         return outer
     }
 
-    private func settingsRow(label: String, control: NSView) -> NSView {
-        let row = NSStackView()
-        row.orientation = .horizontal
-        row.spacing = 10
-        row.alignment = .centerY
+    private func settingCard(title: String, detail: String, control: NSView) -> NSView {
+        let row = baseCardRow()
 
-        let labelView = NSTextField(labelWithString: label)
-        labelView.font = NSFont.systemFont(ofSize: 13)
-        labelView.alignment = .right
-        labelView.widthAnchor.constraint(equalToConstant: 150).isActive = true
+        let titleLabel = NSTextField(labelWithString: title)
+        titleLabel.font = NSFont.systemFont(ofSize: 13, weight: .medium)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(titleLabel)
 
-        row.addArrangedSubview(labelView)
-        row.addArrangedSubview(control)
+        let detailLabel = NSTextField(labelWithString: detail)
+        detailLabel.font = NSFont.systemFont(ofSize: 12)
+        detailLabel.textColor = .secondaryLabelColor
+        detailLabel.lineBreakMode = .byTruncatingTail
+        detailLabel.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(detailLabel)
+
+        control.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(control)
+
+        NSLayoutConstraint.activate([
+            row.heightAnchor.constraint(greaterThanOrEqualToConstant: 56),
+
+            titleLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 14),
+            titleLabel.topAnchor.constraint(equalTo: row.topAnchor, constant: 10),
+
+            detailLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            detailLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
+            detailLabel.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -10),
+
+            control.leadingAnchor.constraint(greaterThanOrEqualTo: detailLabel.trailingAnchor, constant: 12),
+            control.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
+            control.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+        ])
+
         return row
     }
 
-    private func appRow(app: NSRunningApplication, trailingView: NSView) -> NSView {
+    private func linkCard(title: String, detail: String, url: String) -> NSView {
+        let button = NSButton(title: detail, target: self, action: #selector(openAboutLink(_:)))
+        button.bezelStyle = .inline
+        button.tag = url == "https://vivek.ink" ? 1 : 2
+        return settingCard(title: title, detail: url, control: button)
+    }
+
+    private func baseCardRow() -> NSView {
         let row = NSView()
         row.wantsLayer = true
         row.layer?.backgroundColor = NSColor.controlBackgroundColor.withAlphaComponent(0.55).cgColor
         row.layer?.cornerRadius = 8
         row.translatesAutoresizingMaskIntoConstraints = false
+        return row
+    }
+
+    private func appRow(app: NSRunningApplication, trailingView: NSView) -> NSView {
+        let row = baseCardRow()
 
         let iconView = NSImageView()
         iconView.image = app.icon ?? NSImage()
@@ -472,5 +526,11 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         NSWorkspace.shared.open(
             URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
         )
+    }
+
+    @objc private func openAboutLink(_ sender: NSButton) {
+        let urlString = sender.tag == 1 ? "https://vivek.ink" : "https://twitter.com/0xstatemachine"
+        guard let url = URL(string: urlString) else { return }
+        NSWorkspace.shared.open(url)
     }
 }

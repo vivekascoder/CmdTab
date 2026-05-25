@@ -4,7 +4,7 @@ private let blockW: CGFloat = 112
 private let blockH: CGFloat = 134
 private let blockGap: CGFloat = 12
 private let maxCols = 4
-private let listRowH: CGFloat = 58
+private let listRowH: CGFloat = 48
 private let listW: CGFloat = 420
 private let overlayCornerRadius: CGFloat = 38
 
@@ -349,22 +349,14 @@ final class OverlayPanelController: NSObject {
         row.bezelStyle = .regularSquare
         row.translatesAutoresizingMaskIntoConstraints = false
         row.wantsLayer = true
-        row.layer?.cornerRadius = 16
+        row.layer?.cornerRadius = 8
         row.layer?.cornerCurve = .continuous
-        row.layer?.backgroundColor = NSColor(white: 0.08, alpha: 0.84).cgColor
+        row.layer?.backgroundColor = NSColor(white: 0.08, alpha: 0.78).cgColor
         row.target = self
         row.action = #selector(listRowClicked(_:))
         row.tag = appEntries.firstIndex(of: app) ?? -1
 
-        let numberLabel = NSTextField(labelWithString: displayNumber)
-        numberLabel.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .bold)
-        numberLabel.textColor = NSColor(white: 0.74, alpha: 1.0)
-        numberLabel.alignment = .center
-        numberLabel.wantsLayer = true
-        numberLabel.layer?.backgroundColor = NSColor(white: 1.0, alpha: 0.10).cgColor
-        numberLabel.layer?.cornerRadius = 7
-        numberLabel.layer?.cornerCurve = .continuous
-        numberLabel.translatesAutoresizingMaskIntoConstraints = false
+        let numberLabel = keyBadge(displayNumber)
         row.addSubview(numberLabel)
 
         let iconView = NSImageView()
@@ -380,26 +372,59 @@ final class OverlayPanelController: NSObject {
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         row.addSubview(nameLabel)
 
+        var shortcutLabel: NSTextField?
+        if let bundleID = app.bundleIdentifier,
+           let shortcut = AppSettings.shared.appShortcuts[bundleID],
+           !shortcut.isEmpty {
+            let label = keyBadge(shortcut.uppercased())
+            row.addSubview(label)
+            shortcutLabel = label
+        }
+
         NSLayoutConstraint.activate([
             row.heightAnchor.constraint(equalToConstant: listRowH),
             row.widthAnchor.constraint(equalToConstant: listW),
 
-            numberLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 14),
+            numberLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 12),
             numberLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            numberLabel.widthAnchor.constraint(equalToConstant: 28),
+            numberLabel.widthAnchor.constraint(equalToConstant: 32),
             numberLabel.heightAnchor.constraint(equalToConstant: 28),
 
-            iconView.leadingAnchor.constraint(equalTo: numberLabel.trailingAnchor, constant: 12),
+            iconView.leadingAnchor.constraint(equalTo: numberLabel.trailingAnchor, constant: 10),
             iconView.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            iconView.widthAnchor.constraint(equalToConstant: 36),
-            iconView.heightAnchor.constraint(equalToConstant: 36),
+            iconView.widthAnchor.constraint(equalToConstant: 28),
+            iconView.heightAnchor.constraint(equalToConstant: 28),
 
-            nameLabel.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 12),
-            nameLabel.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
+            nameLabel.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 10),
             nameLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
         ])
 
+        if let shortcutLabel {
+            NSLayoutConstraint.activate([
+                shortcutLabel.leadingAnchor.constraint(greaterThanOrEqualTo: nameLabel.trailingAnchor, constant: 12),
+                shortcutLabel.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
+                shortcutLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+                shortcutLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 32),
+                shortcutLabel.heightAnchor.constraint(equalToConstant: 28),
+            ])
+        } else {
+            nameLabel.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12).isActive = true
+        }
+
         return row
+    }
+
+    private func keyBadge(_ text: String) -> NSTextField {
+        let label = NSTextField(labelWithString: text)
+        label.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .bold)
+        label.textColor = NSColor(white: 0.74, alpha: 1.0)
+        label.alignment = .center
+        label.wantsLayer = true
+        label.layer?.backgroundColor = NSColor(white: 1.0, alpha: 0.10).cgColor
+        label.layer?.cornerRadius = 7
+        label.layer?.cornerCurve = .continuous
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
     }
 
     private func makeGridCell(containing block: AppBlockView? = nil) -> NSView {
