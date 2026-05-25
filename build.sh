@@ -36,7 +36,11 @@ fi
 
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
     echo "Signing with identity: ${CODESIGN_IDENTITY}"
-    codesign --force --sign "${CODESIGN_IDENTITY}" "${BUNDLE_DIR}"
+    CODESIGN_ARGS=(--force --sign "${CODESIGN_IDENTITY}" --options runtime)
+    if [[ "${CODESIGN_IDENTITY}" == Developer\ ID\ Application:* ]]; then
+        CODESIGN_ARGS+=(--timestamp)
+    fi
+    codesign "${CODESIGN_ARGS[@]}" "${BUNDLE_DIR}"
 else
     echo "Signing with ad-hoc signature..."
     codesign --force --sign - "${BUNDLE_DIR}"
