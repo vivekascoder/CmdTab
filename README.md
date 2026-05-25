@@ -6,7 +6,7 @@
 
 CmdTab is a lightweight macOS app switcher that shows a numbered overlay when you hold the right Command key. Select apps with number keys, or assign custom character shortcuts for specific apps.
 
-Landing page: https://cmdtab-landing.vercel.app
+Landing page: https://cmd-tab.vercel.app/
 
 ## Features
 
