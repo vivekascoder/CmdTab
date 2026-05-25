@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var overlayController: OverlayPanelController!
     private var statusBarController: StatusBarController!
     private var isRightCmdDown = false
+    private var suppressRightCmdUntilRelease = false
     private var accessibilityRetryTimer: Timer?
 
     private let log = OSLog(subsystem: "com.cmdtab.app", category: "events")
@@ -122,13 +123,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
 
             if keyCode == KeyCode.rightCommand {
-                isRightCmdDown.toggle()
-                if isRightCmdDown {
+                let rightCmdNowDown = event.flags.contains(.maskCommand)
+
+                if rightCmdNowDown {
+                    isRightCmdDown = true
+                    if suppressRightCmdUntilRelease {
+                        return nil
+                    }
+
                     os_log(.debug, log: log, "Right Cmd PRESSED")
                     DispatchQueue.main.async { [weak self] in
                         self?.overlayController.show()
                     }
                 } else {
+                    isRightCmdDown = false
+                    suppressRightCmdUntilRelease = false
                     os_log(.debug, log: log, "Right Cmd RELEASED")
                     DispatchQueue.main.async { [weak self] in
                         self?.overlayController.dismiss()
@@ -143,7 +152,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
 
             if keyCode == KeyCode.rightCommand {
-                if !isRightCmdDown {
+                if !isRightCmdDown && !suppressRightCmdUntilRelease {
                     isRightCmdDown = true
                     os_log(.debug, log: log, "Right Cmd keyDown (fallback)")
                     DispatchQueue.main.async { [weak self] in
@@ -157,7 +166,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             if keyCode == KeyCode.escape {
                 os_log(.debug, log: log, "Escape — dismissing overlay")
-                isRightCmdDown = false
+                suppressRightCmdUntilRelease = true
                 DispatchQueue.main.async { [weak self] in
                     self?.overlayController.dismiss()
                 }
@@ -166,7 +175,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             if let index = overlayController.index(for: keyCode) {
                 os_log(.debug, log: log, "Number -> index %{public}d", index)
-                isRightCmdDown = false
+                suppressRightCmdUntilRelease = true
                 DispatchQueue.main.async { [weak self] in
                     self?.overlayController.selectApp(at: index) { app in
                         app.activate()
@@ -178,7 +187,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if let shortcut = eventShortcutCharacter(event),
                let index = overlayController.index(for: shortcut) {
                 os_log(.debug, log: log, "Shortcut -> index %{public}d", index)
-                isRightCmdDown = false
+                suppressRightCmdUntilRelease = true
                 DispatchQueue.main.async { [weak self] in
                     self?.overlayController.selectApp(at: index) { app in
                         app.activate()
@@ -187,13 +196,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return nil
             }
 
-            return Unmanaged.passRetained(event)
+            return nil
 
         case .keyUp:
             if event.getIntegerValueField(.keyboardEventKeycode) == KeyCode.rightCommand {
                 os_log(.debug, log: log, "Right Cmd keyUp")
                 if isRightCmdDown {
                     isRightCmdDown = false
+                    suppressRightCmdUntilRelease = false
                     DispatchQueue.main.async { [weak self] in
                         self?.overlayController.dismiss()
                     }
@@ -201,7 +211,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return nil
             }
             guard isRightCmdDown else { return Unmanaged.passRetained(event) }
-            return Unmanaged.passRetained(event)
+            return nil
 
         default:
             break
