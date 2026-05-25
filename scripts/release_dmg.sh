@@ -49,13 +49,14 @@ hdiutil create \
 
 if [[ -n "${DEVELOPER_ID_INSTALLER}" ]]; then
     echo "Signing DMG with installer identity: ${DEVELOPER_ID_INSTALLER}"
-    codesign --force --sign "${DEVELOPER_ID_INSTALLER}" "${DMG_PATH}"
+    codesign --force --sign "${DEVELOPER_ID_INSTALLER}" --timestamp "${DMG_PATH}"
 elif security find-identity -v -p codesigning 2>/dev/null | grep -q '"Developer ID Installer:'; then
     DEVELOPER_ID_INSTALLER="$(security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(Developer ID Installer:[^"]*\)".*/\1/p' | head -n 1)"
     echo "Signing DMG with installer identity: ${DEVELOPER_ID_INSTALLER}"
-    codesign --force --sign "${DEVELOPER_ID_INSTALLER}" "${DMG_PATH}"
+    codesign --force --sign "${DEVELOPER_ID_INSTALLER}" --timestamp "${DMG_PATH}"
 else
-    echo "No Developer ID Installer identity found; leaving DMG unsigned before notarization."
+    echo "No Developer ID Installer identity found; signing DMG with application identity."
+    codesign --force --sign "${DEVELOPER_ID_APPLICATION}" --timestamp "${DMG_PATH}"
 fi
 
 if [[ "${NOTARIZE}" == "1" ]]; then
