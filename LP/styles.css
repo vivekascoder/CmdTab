@@ -1,4 +1,5 @@
 :root {
+  --font-sans: "Space Grotesk", sans-serif;
   --bg: #0b0b0c;
   --surface: #161618;
   --surface-hover: #1e1e21;
@@ -30,7 +31,8 @@ html {
 }
 
 body {
-  font-family: "Overpass", "Nunito", sans-serif;
+  font-family: var(--font-sans);
+  font-optical-sizing: auto;
   background: var(--bg);
   color: var(--text-primary);
   line-height: 1.6;
@@ -41,7 +43,7 @@ body {
 kbd {
   display: inline-block;
   padding: 2px 7px;
-  font-family: "Rubik", "Overpass", sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.85em;
   font-weight: 600;
   color: var(--text-primary);
@@ -58,7 +60,7 @@ section {
 }
 
 h1 {
-  font-family: "Noto Serif", serif;
+  font-family: var(--font-sans);
   font-size: 2.35rem;
   font-weight: 700;
   line-height: 1.15;
@@ -68,7 +70,7 @@ h1 {
 }
 
 h2 {
-  font-family: "Noto Serif", serif;
+  font-family: var(--font-sans);
   font-size: 1.7rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -78,7 +80,7 @@ h2 {
 }
 
 h3 {
-  font-family: "Rubik", "Overpass", sans-serif;
+  font-family: var(--font-sans);
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 8px;
@@ -97,7 +99,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: "Rubik", "Overpass", sans-serif;
+  font-family: var(--font-sans);
   padding: 12px 28px;
   border-radius: var(--radius);
   font-size: 0.95rem;
@@ -150,7 +152,7 @@ a {
 }
 
 .eyebrow {
-  font-family: "Rubik", "Overpass", sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -179,7 +181,7 @@ a {
 }
 
 .version {
-  font-family: "Rubik", "Overpass", sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.85rem;
   color: var(--text-tertiary);
 }
@@ -216,7 +218,7 @@ a {
   max-width: 720px;
   margin: 28px auto 0;
   color: var(--text-secondary);
-  font-family: "Noto Serif", serif;
+  font-family: var(--font-sans);
   font-size: 1.15rem;
   line-height: 1.5;
   text-align: center;
