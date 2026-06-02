@@ -10,7 +10,7 @@ enum InstantSpaceSwitcher {
     private typealias CGSCopyManagedDisplaySpacesFunction = @convention(c) (CGSConnectionID, CFString?) -> Unmanaged<CFArray>?
     private typealias CGSCopySpacesForWindowsFunction = @convention(c) (CGSConnectionID, Int32, CFArray) -> Unmanaged<CFArray>?
 
-    private enum Direction {
+    enum Direction {
         case left
         case right
     }
@@ -30,6 +30,13 @@ enum InstantSpaceSwitcher {
     private static let gesturePhaseChanged: Int64 = 2
     private static let gesturePhaseEnded: Int64 = 4
     private static let gestureVelocity = 2_000.0
+    private static let workspaceWrapStepDelay: TimeInterval = 0.11
+    private static var workspaceSwitchInProgress = false
+
+    private struct WorkspacePosition {
+        let index: Int
+        let count: Int
+    }
 
     static func activate(_ app: NSRunningApplication) {
         guard AppSettings.shared.instantSpaceSwitching else {
@@ -44,6 +51,27 @@ enum InstantSpaceSwitcher {
         } else {
             app.activate()
         }
+    }
+
+    static func switchWorkspace(_ direction: Direction) {
+        guard !workspaceSwitchInProgress else { return }
+
+        guard let position = currentWorkspacePosition(), position.count > 1 else {
+            _ = postDockSwipe(direction: direction)
+            return
+        }
+
+        let lastIndex = position.count - 1
+        let move: (direction: Direction, steps: Int)
+
+        switch direction {
+        case .right:
+            move = position.index == lastIndex ? (.left, lastIndex) : (.right, 1)
+        case .left:
+            move = position.index == 0 ? (.right, lastIndex) : (.left, 1)
+        }
+
+        postWorkspaceSwipes(direction: move.direction, steps: move.steps)
     }
 
     private static func switchToSpace(containing app: NSRunningApplication) -> Bool {
@@ -129,6 +157,36 @@ enum InstantSpaceSwitcher {
         }
 
         return nil
+    }
+
+    private static func currentWorkspacePosition() -> WorkspacePosition? {
+        guard let connection = mainConnectionID(),
+              let activeSpaceID = activeSpaceID(connection: connection),
+              let indexes = currentDisplaySpaceIndexes(connection: connection, activeSpaceID: activeSpaceID),
+              let currentIndex = indexes[activeSpaceID] else {
+            return nil
+        }
+
+        return WorkspacePosition(index: currentIndex, count: indexes.count)
+    }
+
+    private static func postWorkspaceSwipes(direction: Direction, steps: Int) {
+        guard steps > 0 else { return }
+
+        if steps == 1 {
+            _ = postDockSwipe(direction: direction)
+            return
+        }
+
+        workspaceSwitchInProgress = true
+        for step in 0..<steps {
+            DispatchQueue.main.asyncAfter(deadline: .now() + workspaceWrapStepDelay * Double(step)) {
+                _ = postDockSwipe(direction: direction)
+                if step == steps - 1 {
+                    workspaceSwitchInProgress = false
+                }
+            }
+        }
     }
 
     private static func postDockSwipe(direction: Direction) -> Bool {

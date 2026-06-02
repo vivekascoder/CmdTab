@@ -11,6 +11,9 @@ private let overlayCornerRadius: CGFloat = 38
 private final class RoundedVisualEffectView: NSVisualEffectView {
     override func layout() {
         super.layout()
+        layer?.cornerRadius = overlayCornerRadius
+        layer?.cornerCurve = .continuous
+        layer?.masksToBounds = true
         maskImage = roundedMaskImage(size: bounds.size, radius: overlayCornerRadius)
     }
 
@@ -29,9 +32,50 @@ private final class RoundedVisualEffectView: NSVisualEffectView {
     }
 }
 
+private final class RoundedClipView: NSView {
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        layer?.cornerRadius = overlayCornerRadius
+        layer?.cornerCurve = .continuous
+        layer?.masksToBounds = true
+        layer?.backgroundColor = NSColor.clear.cgColor
+        layer?.borderWidth = 0
+    }
+
+    override func layout() {
+        super.layout()
+        guard bounds.width > 0, bounds.height > 0 else { return }
+
+        let mask = CAShapeLayer()
+        mask.path = CGPath(
+            roundedRect: bounds,
+            cornerWidth: overlayCornerRadius,
+            cornerHeight: overlayCornerRadius,
+            transform: nil
+        )
+        layer?.mask = mask
+    }
+}
+
+private final class OverlayShadowView: NSView {
+    override func layout() {
+        super.layout()
+        layer?.shadowPath = CGPath(
+            roundedRect: bounds,
+            cornerWidth: overlayCornerRadius,
+            cornerHeight: overlayCornerRadius,
+            transform: nil
+        )
+    }
+}
+
 private final class OverlayListRowButton: NSButton {
     private var isHovered = false
     private var isPressedRow = false
+    var isKeyboardSelected = false {
+        didSet { updateBackground() }
+    }
 
     override var isHighlighted: Bool {
         didSet {
@@ -66,6 +110,8 @@ private final class OverlayListRowButton: NSButton {
         wantsLayer = true
         layer?.backgroundColor = if isPressedRow {
             NSColor(white: 1.0, alpha: 0.12).cgColor
+        } else if isKeyboardSelected {
+            NSColor(white: 1.0, alpha: 0.11).cgColor
         } else if isHovered {
             NSColor(white: 1.0, alpha: 0.08).cgColor
         } else {
@@ -117,8 +163,12 @@ final class OverlayPanelController: NSObject {
     private var gridView: NSStackView?
     private var tintView: NSView?
     private var titleLabel: NSTextField?
+    private var footerView: NSView?
+    private var workspaceHintLabel: NSTextField?
     private var appEntries: [NSRunningApplication] = []
     private var blockViews: [AppBlockView] = []
+    private var listRowButtons: [OverlayListRowButton] = []
+    private var selectedIndex: Int?
     var isVisible: Bool { panel?.isVisible ?? false }
 
     private let numberKeyCodes: [Int64: Int] = [
@@ -151,9 +201,22 @@ final class OverlayPanelController: NSObject {
         completion(app)
     }
 
+    func selectNextApp() {
+        guard !appEntries.isEmpty else { return }
+        selectedIndex = ((selectedIndex ?? -1) + 1) % appEntries.count
+        updateSelectionAppearance()
+    }
+
+    func activateSelectedApp(completion: @escaping (NSRunningApplication) -> Void) -> Bool {
+        guard let selectedIndex, selectedIndex < appEntries.count else { return false }
+        selectApp(at: selectedIndex, completion: completion)
+        return true
+    }
+
     func show() {
         buildAppList()
         guard !appEntries.isEmpty else { return }
+        selectedIndex = 0
 
         if panel == nil {
             createPanel()
@@ -209,13 +272,12 @@ final class OverlayPanelController: NSObject {
         panel.isReleasedWhenClosed = false
         AppSettings.shared.applyAppearance(to: panel)
 
-        let contentView = NSView(frame: NSRect(x: 0, y: 0, width: 600, height: 200))
+        let contentView = OverlayShadowView(frame: NSRect(x: 0, y: 0, width: 600, height: 200))
         contentView.wantsLayer = true
         contentView.layer?.cornerRadius = overlayCornerRadius
         contentView.layer?.cornerCurve = .continuous
-        contentView.layer?.masksToBounds = true
-        contentView.layer?.borderColor = NSColor(white: 1.0, alpha: 0.10).cgColor
-        contentView.layer?.borderWidth = 1
+        contentView.layer?.masksToBounds = false
+        contentView.layer?.borderWidth = 0
 
         contentView.shadow = NSShadow()
         contentView.layer?.shadowColor = NSColor.black.cgColor
@@ -223,16 +285,21 @@ final class OverlayPanelController: NSObject {
         contentView.layer?.shadowRadius = 30
         contentView.layer?.shadowOffset = NSSize(width: 0, height: -10)
 
+        let clippedView = RoundedClipView()
+        clippedView.wantsLayer = true
+        clippedView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(clippedView)
+
         let blurView = RoundedVisualEffectView()
         blurView.material = .popover
-        blurView.blendingMode = .behindWindow
+        blurView.blendingMode = .withinWindow
         blurView.state = .active
         blurView.wantsLayer = true
         blurView.layer?.cornerRadius = overlayCornerRadius
         blurView.layer?.cornerCurve = .continuous
         blurView.layer?.masksToBounds = true
         blurView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(blurView)
+        clippedView.addSubview(blurView)
 
         let tintView = NSView()
         tintView.wantsLayer = true
@@ -241,7 +308,7 @@ final class OverlayPanelController: NSObject {
         tintView.layer?.masksToBounds = true
         tintView.layer?.backgroundColor = overlayTintColor().cgColor
         tintView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(tintView)
+        clippedView.addSubview(tintView)
 
         let grid = NSStackView()
         grid.orientation = .vertical
@@ -249,33 +316,74 @@ final class OverlayPanelController: NSObject {
         grid.alignment = .width
         grid.distribution = .fillEqually
         grid.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(grid)
+        clippedView.addSubview(grid)
 
-        let titleLabel = NSTextField(labelWithString: "CmdTab")
+        let titleLabel = NSTextField(labelWithString: "Cmdtab")
         titleLabel.font = NSFont.systemFont(ofSize: 15, weight: .semibold)
         titleLabel.textColor = NSColor(white: 0.82, alpha: 1.0)
         titleLabel.alignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(titleLabel)
+        clippedView.addSubview(titleLabel)
+
+        let footerView = NSView()
+        footerView.wantsLayer = true
+        footerView.layer?.backgroundColor = NSColor(white: 0.035, alpha: 0.82).cgColor
+        footerView.translatesAutoresizingMaskIntoConstraints = false
+        clippedView.addSubview(footerView)
+
+        let workspaceHintLabel = NSTextField(labelWithString: "switch workspace")
+        workspaceHintLabel.font = NSFont.systemFont(ofSize: 11, weight: .medium)
+        workspaceHintLabel.textColor = NSColor(white: 0.66, alpha: 1.0)
+        workspaceHintLabel.alignment = .right
+        workspaceHintLabel.translatesAutoresizingMaskIntoConstraints = false
+        footerView.addSubview(workspaceHintLabel)
+
+        let leftArrowBadge = keyBadge("←")
+        let rightArrowBadge = keyBadge("→")
+        footerView.addSubview(leftArrowBadge)
+        footerView.addSubview(rightArrowBadge)
 
         NSLayoutConstraint.activate([
-            blurView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            blurView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            blurView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            blurView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            clippedView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            clippedView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            clippedView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            clippedView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
 
-            tintView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            tintView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            tintView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            tintView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            blurView.topAnchor.constraint(equalTo: clippedView.topAnchor),
+            blurView.leadingAnchor.constraint(equalTo: clippedView.leadingAnchor),
+            blurView.trailingAnchor.constraint(equalTo: clippedView.trailingAnchor),
+            blurView.bottomAnchor.constraint(equalTo: clippedView.bottomAnchor),
 
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 22),
-            titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            tintView.topAnchor.constraint(equalTo: clippedView.topAnchor),
+            tintView.leadingAnchor.constraint(equalTo: clippedView.leadingAnchor),
+            tintView.trailingAnchor.constraint(equalTo: clippedView.trailingAnchor),
+            tintView.bottomAnchor.constraint(equalTo: clippedView.bottomAnchor),
+
+            titleLabel.topAnchor.constraint(equalTo: clippedView.topAnchor, constant: 22),
+            titleLabel.centerXAnchor.constraint(equalTo: clippedView.centerXAnchor),
+
+            footerView.leadingAnchor.constraint(equalTo: clippedView.leadingAnchor),
+            footerView.trailingAnchor.constraint(equalTo: clippedView.trailingAnchor),
+            footerView.bottomAnchor.constraint(equalTo: clippedView.bottomAnchor),
+            footerView.heightAnchor.constraint(equalToConstant: 30),
+
+            rightArrowBadge.centerYAnchor.constraint(equalTo: footerView.centerYAnchor),
+            rightArrowBadge.trailingAnchor.constraint(equalTo: footerView.trailingAnchor, constant: -34),
+            rightArrowBadge.widthAnchor.constraint(equalToConstant: 22),
+            rightArrowBadge.heightAnchor.constraint(equalToConstant: 22),
+
+            leftArrowBadge.centerYAnchor.constraint(equalTo: footerView.centerYAnchor),
+            leftArrowBadge.trailingAnchor.constraint(equalTo: rightArrowBadge.leadingAnchor, constant: -6),
+            leftArrowBadge.widthAnchor.constraint(equalToConstant: 22),
+            leftArrowBadge.heightAnchor.constraint(equalToConstant: 22),
+
+            workspaceHintLabel.centerYAnchor.constraint(equalTo: footerView.centerYAnchor),
+            workspaceHintLabel.trailingAnchor.constraint(equalTo: leftArrowBadge.leadingAnchor, constant: -8),
 
             grid.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 18),
-            grid.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 34),
-            grid.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -34),
-            grid.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -36),
+            grid.leadingAnchor.constraint(equalTo: clippedView.leadingAnchor, constant: 34),
+            grid.trailingAnchor.constraint(equalTo: clippedView.trailingAnchor, constant: -34),
+            grid.bottomAnchor.constraint(equalTo: footerView.topAnchor, constant: -16),
         ])
 
         panel.contentView = contentView
@@ -283,6 +391,8 @@ final class OverlayPanelController: NSObject {
         self.gridView = grid
         self.tintView = tintView
         self.titleLabel = titleLabel
+        self.footerView = footerView
+        self.workspaceHintLabel = workspaceHintLabel
     }
 
     private func refreshContent() {
@@ -293,6 +403,7 @@ final class OverlayPanelController: NSObject {
 
         grid.arrangedSubviews.forEach { $0.removeFromSuperview() }
         blockViews.removeAll()
+        listRowButtons.removeAll()
 
         let count = appEntries.count
         let layoutMode = AppSettings.shared.overlayLayoutMode
@@ -302,6 +413,7 @@ final class OverlayPanelController: NSObject {
         } else {
             refreshBlockContent(in: grid, panel: panel, count: count)
         }
+        updateSelectionAppearance()
     }
 
     private func refreshBlockContent(in grid: NSStackView, panel: NSPanel, count: Int) {
@@ -348,7 +460,7 @@ final class OverlayPanelController: NSObject {
         }
 
         let hPadding: CGFloat = 68
-        let vPadding: CGFloat = 92
+        let vPadding: CGFloat = 106
         let cols = rowCount > 1 ? maxCols : actualCols
         let panelW = CGFloat(cols) * blockW + CGFloat(cols - 1) * blockGap + hPadding
         let panelH = CGFloat(rowCount) * blockH + CGFloat(max(rowCount - 1, 0)) * blockGap + vPadding
@@ -380,7 +492,7 @@ final class OverlayPanelController: NSObject {
         }
 
         let hPadding: CGFloat = 68
-        let vPadding: CGFloat = 92
+        let vPadding: CGFloat = 106
         let rowGaps = max(count - 1, 0)
         let panelW = listW + hPadding
         let panelH = CGFloat(count) * listRowH + CGFloat(rowGaps) * grid.spacing + vPadding
@@ -405,6 +517,7 @@ final class OverlayPanelController: NSObject {
         row.target = self
         row.action = #selector(listRowClicked(_:))
         row.tag = appEntries.firstIndex(of: app) ?? -1
+        listRowButtons.append(row)
 
         let numberLabel = keyBadge(displayNumber)
         row.addSubview(numberLabel)
@@ -462,6 +575,12 @@ final class OverlayPanelController: NSObject {
         }
 
         return row
+    }
+
+    private func updateSelectionAppearance() {
+        for row in listRowButtons {
+            row.isKeyboardSelected = row.tag == selectedIndex
+        }
     }
 
     private func keyBadge(_ text: String) -> KeyBadgeView {

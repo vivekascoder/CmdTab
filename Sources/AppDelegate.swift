@@ -5,8 +5,13 @@ import OSLog
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private enum KeyCode {
         static let escape: Int64 = 53
+        static let tab: Int64 = 48
+        static let returnKey: Int64 = 36
+        static let keypadEnter: Int64 = 76
         static let rightCommand: Int64 = 54
         static let leftCommand: Int64 = 55
+        static let leftArrow: Int64 = 123
+        static let rightArrow: Int64 = 124
     }
 
     private var eventTap: CFMachPort?
@@ -169,6 +174,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 suppressRightCmdUntilRelease = true
                 DispatchQueue.main.async { [weak self] in
                     self?.overlayController.dismiss()
+                }
+                return nil
+            }
+
+            if keyCode == KeyCode.leftArrow || keyCode == KeyCode.rightArrow {
+                let direction: InstantSpaceSwitcher.Direction = keyCode == KeyCode.rightArrow ? .right : .left
+                os_log(.debug, log: log, "Arrow -> workspace switch")
+                DispatchQueue.main.async {
+                    InstantSpaceSwitcher.switchWorkspace(direction)
+                }
+                return nil
+            }
+
+            if keyCode == KeyCode.tab {
+                os_log(.debug, log: log, "Tab -> next selected app")
+                DispatchQueue.main.async { [weak self] in
+                    self?.overlayController.selectNextApp()
+                }
+                return nil
+            }
+
+            if keyCode == KeyCode.returnKey || keyCode == KeyCode.keypadEnter {
+                os_log(.debug, log: log, "Enter -> selected app")
+                suppressRightCmdUntilRelease = true
+                DispatchQueue.main.async { [weak self] in
+                    _ = self?.overlayController.activateSelectedApp { app in
+                        InstantSpaceSwitcher.activate(app)
+                    }
                 }
                 return nil
             }
