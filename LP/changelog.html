@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CmdTab — Changelog</title>
+  <meta name="description" content="What's new in CmdTab." />
+  <link rel="icon" type="image/png" href="app-icon.png" />
+  <link rel="apple-touch-icon" href="app-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Primary navigation">
+  <a class="nav-brand" href="index.html" aria-label="CmdTab home">
+    <img src="app-icon.png" alt="" />
+    <span>CmdTab</span>
+  </a>
+  <div class="nav-links">
+    <a href="changelog.html">Changelog</a>
+    <a href="https://twitter.com/0xstatemachine">Twitter</a>
+    <a class="nav-download" href="index.html#download">Download</a>
+  </div>
+  <button class="nav-menu-button" type="button" aria-label="Open menu" aria-controls="mobile-menu" aria-expanded="false">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+</nav>
+
+<div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+  <div class="mobile-menu-panel">
+    <div class="mobile-menu-top">
+      <a class="nav-brand" href="index.html" aria-label="CmdTab home">
+        <img src="app-icon.png" alt="" />
+        <span>CmdTab</span>
+      </a>
+      <button class="mobile-menu-close" type="button" aria-label="Close menu">×</button>
+    </div>
+    <div class="mobile-menu-links">
+      <a href="changelog.html">Changelog</a>
+      <a href="https://twitter.com/0xstatemachine">Twitter</a>
+      <a href="index.html#download">Download</a>
+    </div>
+  </div>
+</div>
+
+<main id="top">
+
+<section class="changelog">
+  <h1>Changelog</h1>
+
+  <div class="changelog-entry">
+    <div class="changelog-version">
+      <span class="version-badge">v1.0.3</span>
+      <span class="changelog-date">Latest</span>
+    </div>
+    <div class="changelog-body">
+      <div class="demo-player">
+        <div class="plyr__video-embed" id="changelog-player">
+          <iframe
+            src="https://www.youtube.com/embed/hPp1V_jY4E8?rel=0&modestbranding=1"
+            frameborder="0"
+            allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </div>
+      <ul class="changelog-list">
+        <li><strong>Instant Space switching</strong> — jump between workspaces without the slide animation.</li>
+        <li><strong>Workspace navigation</strong> — fixed transition between last and first workspace.</li>
+        <li>Updated landing page with minimalist redesign and demo video.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-version">
+      <span class="version-badge">v1.0.2</span>
+      <span class="changelog-date">Previous</span>
+    </div>
+    <div class="changelog-body">
+      <ul class="changelog-list">
+        <li><strong>Workspace navigation</strong> — added support for switching between Spaces with arrow keys.</li>
+        <li>Stability improvements and bug fixes.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-version">
+      <span class="version-badge">v1.0.1</span>
+      <span class="changelog-date">Previous</span>
+    </div>
+    <div class="changelog-body">
+      <ul class="changelog-list">
+        <li><strong>Accessibility permission</strong> — improved the onboarding flow for granting permissions.</li>
+        <li>UI polish for the app overlay.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>CmdTab is free and open source. No tracking. No ads. No nonsense.</p>
+  <p class="footer-meta">Built with Swift and Cocoa. &lt; 200 KB compiled. &mdash; <a href="https://twitter.com/0xstatemachine">@0xstatemachine</a></p>
+</footer>
+
+</main>
+
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

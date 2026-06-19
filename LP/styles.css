@@ -635,6 +635,88 @@ footer p {
   font-size: 0.76rem;
 }
 
+/* Changelog */
+
+.changelog {
+  max-width: 680px;
+  padding-top: 48px;
+  text-align: left;
+}
+
+.changelog h1 {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.changelog-entry {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.changelog-version {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.version-badge {
+  display: inline-block;
+  width: fit-content;
+  padding: 3px 10px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.changelog-date {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+}
+
+.changelog-body {
+  min-width: 0;
+}
+
+.changelog .demo-player {
+  margin-bottom: 20px;
+}
+
+.changelog-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.changelog-list li {
+  font-size: 0.87rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  padding-left: 18px;
+  position: relative;
+}
+
+.changelog-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+}
+
+.changelog-list li strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 /* Plyr overrides */
 
 .plyr {
@@ -683,6 +765,11 @@ footer p {
 
   .space-switching-copy {
     grid-template-columns: 1fr;
+  }
+
+  .changelog-entry {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 

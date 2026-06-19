@@ -1,8 +1,18 @@
 (function () {
   if (window.Plyr) {
-    new Plyr('#player', {
-      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
-    });
+    var videoEl = document.querySelector('#player');
+    if (videoEl && videoEl.tagName === 'VIDEO') {
+      new Plyr(videoEl, {
+        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
+      });
+    }
+    var ytEl = document.querySelector('#changelog-player');
+    if (ytEl) {
+      new Plyr(ytEl, {
+        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+        youtube: { rel: 0, modestbranding: 1, noCookie: true }
+      });
+    }
   }
 
   var menu = document.querySelector('.mobile-menu');
