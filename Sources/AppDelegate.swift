@@ -17,8 +17,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var overlayController: OverlayPanelController!
+    private var workspaceOverlayController: WorkspaceOverlayController!
     private var statusBarController: StatusBarController!
     private var isRightCmdDown = false
+    private var isWorkspaceModeActive = false
     private var suppressRightCmdUntilRelease = false
     private var accessibilityRetryTimer: Timer?
 
@@ -26,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         overlayController = OverlayPanelController()
+        workspaceOverlayController = WorkspaceOverlayController()
 
         statusBarController = StatusBarController()
         statusBarController.setup()
@@ -129,6 +132,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             if keyCode == KeyCode.rightCommand {
                 let rightCmdNowDown = event.flags.contains(.maskCommand)
+                let optionDown = event.flags.contains(.maskAlternate)
 
                 if rightCmdNowDown {
                     isRightCmdDown = true
@@ -138,14 +142,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
                     os_log(.debug, log: log, "Right Cmd PRESSED")
                     DispatchQueue.main.async { [weak self] in
-                        self?.overlayController.show()
+                        if optionDown {
+                            self?.enterWorkspaceMode()
+                        } else {
+                            self?.overlayController.show()
+                        }
                     }
                 } else {
                     isRightCmdDown = false
+                    isWorkspaceModeActive = false
                     suppressRightCmdUntilRelease = false
                     os_log(.debug, log: log, "Right Cmd RELEASED")
                     DispatchQueue.main.async { [weak self] in
                         self?.overlayController.dismiss()
+                        self?.workspaceOverlayController.dismiss()
+                    }
+                }
+                return nil
+            }
+
+            if isRightCmdDown {
+                let optionDown = event.flags.contains(.maskAlternate)
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    if optionDown {
+                        self.enterWorkspaceMode()
+                    } else if self.isWorkspaceModeActive {
+                        self.exitWorkspaceMode()
                     }
                 }
                 return nil
@@ -159,9 +182,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if keyCode == KeyCode.rightCommand {
                 if !isRightCmdDown && !suppressRightCmdUntilRelease {
                     isRightCmdDown = true
+                    let optionDown = event.flags.contains(.maskAlternate)
                     os_log(.debug, log: log, "Right Cmd keyDown (fallback)")
                     DispatchQueue.main.async { [weak self] in
-                        self?.overlayController.show()
+                        if optionDown {
+                            self?.enterWorkspaceMode()
+                        } else {
+                            self?.overlayController.show()
+                        }
                     }
                 }
                 return nil
@@ -181,8 +209,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if keyCode == KeyCode.leftArrow || keyCode == KeyCode.rightArrow {
                 let direction: InstantSpaceSwitcher.Direction = keyCode == KeyCode.rightArrow ? .right : .left
                 os_log(.debug, log: log, "Arrow -> workspace switch")
-                DispatchQueue.main.async {
-                    InstantSpaceSwitcher.switchWorkspace(direction)
+                let optionDown = event.flags.contains(.maskAlternate)
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    if optionDown || self.isWorkspaceModeActive {
+                        self.enterWorkspaceMode()
+                        let position = InstantSpaceSwitcher.switchWorkspace(direction)
+                        self.workspaceOverlayController.show(position: position)
+                    } else {
+                        _ = InstantSpaceSwitcher.switchWorkspace(direction)
+                    }
                 }
                 return nil
             }
@@ -207,6 +243,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
 
             if let index = overlayController.index(for: keyCode) {
+                let optionDown = event.flags.contains(.maskAlternate)
+                if optionDown || isWorkspaceModeActive {
+                    let desktopNumber = index == 9 ? 10 : index + 1
+                    os_log(.debug, log: log, "Number -> workspace %{public}d", desktopNumber)
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self = self else { return }
+                        self.enterWorkspaceMode()
+                        let position = InstantSpaceSwitcher.switchWorkspace(toDesktopNumber: desktopNumber)
+                        self.workspaceOverlayController.show(position: position)
+                    }
+                    return nil
+                }
+
                 os_log(.debug, log: log, "Number -> index %{public}d", index)
                 suppressRightCmdUntilRelease = true
                 DispatchQueue.main.async { [weak self] in
@@ -236,9 +285,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 os_log(.debug, log: log, "Right Cmd keyUp")
                 if isRightCmdDown {
                     isRightCmdDown = false
+                    isWorkspaceModeActive = false
                     suppressRightCmdUntilRelease = false
                     DispatchQueue.main.async { [weak self] in
                         self?.overlayController.dismiss()
+                        self?.workspaceOverlayController.dismiss()
                     }
                 }
                 return nil
@@ -251,6 +302,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         return Unmanaged.passRetained(event)
+    }
+
+    private func enterWorkspaceMode() {
+        overlayController.dismiss()
+        isWorkspaceModeActive = true
+        workspaceOverlayController.showCurrentWorkspace()
+    }
+
+    private func exitWorkspaceMode() {
+        isWorkspaceModeActive = false
+        workspaceOverlayController.dismissSoon()
+        overlayController.show()
     }
 
     private func eventShortcutCharacter(_ event: CGEvent) -> String? {

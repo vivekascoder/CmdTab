@@ -19,6 +19,7 @@ swiftc \
     Sources/main.swift \
     Sources/AppSettings.swift \
     Sources/InstantSpaceSwitcher.swift \
+    Sources/WorkspaceOverlayController.swift \
     Sources/AppBlockView.swift \
     Sources/AppDelegate.swift \
     Sources/StatusBarController.swift \

@@ -7,6 +7,7 @@ private let maxCols = 4
 private let listRowH: CGFloat = 48
 private let listW: CGFloat = 360
 private let overlayCornerRadius: CGFloat = 38
+private let overlayGradientBorderWidth: CGFloat = 2
 
 private final class RoundedVisualEffectView: NSVisualEffectView {
     override func layout() {
@@ -33,6 +34,9 @@ private final class RoundedVisualEffectView: NSVisualEffectView {
 }
 
 private final class RoundedClipView: NSView {
+    private let borderLayer = CAGradientLayer()
+    private let borderMask = CAShapeLayer()
+
     override var wantsUpdateLayer: Bool { true }
 
     override func updateLayer() {
@@ -41,6 +45,7 @@ private final class RoundedClipView: NSView {
         layer?.masksToBounds = true
         layer?.backgroundColor = NSColor.clear.cgColor
         layer?.borderWidth = 0
+        ensureGradientBorder()
     }
 
     override func layout() {
@@ -55,6 +60,51 @@ private final class RoundedClipView: NSView {
             transform: nil
         )
         layer?.mask = mask
+        updateGradientBorder()
+    }
+
+    private func ensureGradientBorder() {
+        guard borderLayer.superlayer == nil else { return }
+
+        borderLayer.colors = [
+            NSColor(calibratedRed: 0.45, green: 0.75, blue: 1.0, alpha: 0.95).cgColor,
+            NSColor(calibratedRed: 0.96, green: 0.52, blue: 0.92, alpha: 0.95).cgColor,
+            NSColor(calibratedRed: 1.0, green: 0.78, blue: 0.36, alpha: 0.95).cgColor,
+        ]
+        borderLayer.startPoint = CGPoint(x: 0, y: 0)
+        borderLayer.endPoint = CGPoint(x: 1, y: 1)
+        borderLayer.mask = borderMask
+        borderLayer.zPosition = 1000
+        layer?.addSublayer(borderLayer)
+    }
+
+    private func updateGradientBorder() {
+        ensureGradientBorder()
+
+        borderLayer.frame = bounds
+
+        let outerPath = CGPath(
+            roundedRect: bounds,
+            cornerWidth: overlayCornerRadius,
+            cornerHeight: overlayCornerRadius,
+            transform: nil
+        )
+        let innerRect = bounds.insetBy(dx: overlayGradientBorderWidth, dy: overlayGradientBorderWidth)
+        let innerRadius = max(0, overlayCornerRadius - overlayGradientBorderWidth)
+        let innerPath = CGPath(
+            roundedRect: innerRect,
+            cornerWidth: innerRadius,
+            cornerHeight: innerRadius,
+            transform: nil
+        )
+
+        let path = CGMutablePath()
+        path.addPath(outerPath)
+        path.addPath(innerPath)
+
+        borderMask.frame = bounds
+        borderMask.path = path
+        borderMask.fillRule = .evenOdd
     }
 }
 
