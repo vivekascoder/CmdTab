@@ -1,4 +1,10 @@
 (function () {
+  if (window.Plyr) {
+    new Plyr('#player', {
+      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
+    });
+  }
+
   var menu = document.querySelector('.mobile-menu');
   var menuButton = document.querySelector('.nav-menu-button');
   var closeButton = document.querySelector('.mobile-menu-close');
