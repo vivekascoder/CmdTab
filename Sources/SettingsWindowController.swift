@@ -1,6 +1,10 @@
 import Cocoa
 import ServiceManagement
 
+private final class FlippedView: NSView {
+    override var isFlipped: Bool { true }
+}
+
 final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, NSSearchFieldDelegate {
     private var showBackgroundAppsCheckbox: NSButton!
     private var instantSpaceSwitchingCheckbox: NSButton!
@@ -164,7 +168,7 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         accessibilityStatusLabel.textColor = NSColor.secondaryLabelColor
         accessibilityStatusLabel.lineBreakMode = .byWordWrapping
         accessibilityStatusLabel.maximumNumberOfLines = 0
-        stack.addArrangedSubview(settingCard(title: "Accessibility", detail: "Required to monitor the right Command key.", control: accessibilityStatusLabel))
+        stack.addArrangedSubview(settingCard(title: "Accessibility", detail: nil, control: accessibilityStatusLabel))
 
         openAccessibilityButton = NSButton(
             title: "Open Accessibility Settings",
@@ -214,14 +218,14 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         description.alignment = .center
         stack.addArrangedSubview(description)
 
-        stack.addArrangedSubview(linkCard(title: "Website", detail: "vivek.ink", url: "https://vivek.ink"))
+        stack.addArrangedSubview(linkCard(title: "Website", detail: "cmd-tab.vercel.app", url: "https://cmd-tab.vercel.app/"))
         stack.addArrangedSubview(linkCard(title: "Twitter", detail: "0xstatemachine", url: "https://twitter.com/0xstatemachine"))
 
         return paddedScrollView(containing: stack)
     }
 
     private func buildIgnoreListTab() -> NSView {
-        let stack = appListContainer(
+        let view = appListView(
             searchField: &ignoreSearchField,
             backgroundAppsCheckbox: &ignoreBackgroundAppsCheckbox,
             listStack: &ignoreListStack,
@@ -229,11 +233,11 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
             backgroundAction: #selector(ignoreBackgroundAppsToggled)
         )
         reloadIgnoreList()
-        return paddedScrollView(containing: stack)
+        return view
     }
 
     private func buildShortcutsTab() -> NSView {
-        let stack = appListContainer(
+        let view = appListView(
             searchField: &shortcutsSearchField,
             backgroundAppsCheckbox: &shortcutsBackgroundAppsCheckbox,
             listStack: &shortcutsListStack,
@@ -241,42 +245,80 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
             backgroundAction: #selector(shortcutsBackgroundAppsToggled)
         )
         reloadShortcutsList()
-        return paddedScrollView(containing: stack)
+        return view
     }
 
-    private func appListContainer(
+    private func appListView(
         searchField: inout NSSearchField!,
         backgroundAppsCheckbox: inout NSButton!,
         listStack: inout NSStackView!,
         searchAction: Selector,
         backgroundAction: Selector
-    ) -> NSStackView {
-        let container = NSStackView()
-        container.orientation = .vertical
-        container.spacing = 12
-        container.alignment = .width
+    ) -> NSView {
+        let outer = NSView()
+
+        let header = NSStackView()
+        header.orientation = .vertical
+        header.spacing = 12
+        header.alignment = .width
+        header.translatesAutoresizingMaskIntoConstraints = false
+        outer.addSubview(header)
 
         searchField = NSSearchField()
         searchField.placeholderString = "Search applications"
         searchField.target = self
         searchField.action = searchAction
         searchField.delegate = self
-        container.addArrangedSubview(searchField)
+        header.addArrangedSubview(searchField)
 
         backgroundAppsCheckbox = NSButton(
             checkboxWithTitle: "Show background applications",
             target: self,
             action: backgroundAction
         )
-        container.addArrangedSubview(backgroundAppsCheckbox)
+        header.addArrangedSubview(backgroundAppsCheckbox)
+
+        let scrollView = NSScrollView()
+        scrollView.drawsBackground = false
+        scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        outer.addSubview(scrollView)
+
+        let content = FlippedView()
+        content.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.documentView = content
 
         listStack = NSStackView()
         listStack.orientation = .vertical
         listStack.spacing = 8
         listStack.alignment = .width
-        container.addArrangedSubview(listStack)
+        listStack.translatesAutoresizingMaskIntoConstraints = false
+        content.addSubview(listStack)
 
-        return container
+        let listBottomConstraint = listStack.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -18)
+        listBottomConstraint.priority = .defaultLow
+
+        NSLayoutConstraint.activate([
+            header.topAnchor.constraint(equalTo: outer.topAnchor, constant: 18),
+            header.leadingAnchor.constraint(equalTo: outer.leadingAnchor, constant: 18),
+            header.trailingAnchor.constraint(equalTo: outer.trailingAnchor, constant: -18),
+
+            scrollView.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 12),
+            scrollView.leadingAnchor.constraint(equalTo: outer.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: outer.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: outer.bottomAnchor),
+
+            content.widthAnchor.constraint(equalTo: scrollView.contentView.widthAnchor),
+            content.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.contentView.heightAnchor),
+            listStack.topAnchor.constraint(equalTo: content.topAnchor),
+            listStack.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 18),
+            listStack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -18),
+            listStack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor, constant: -18),
+            listBottomConstraint,
+        ])
+
+        return outer
     }
 
     private func reloadIgnoreList() {
@@ -311,6 +353,7 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         if ignoreListStack.arrangedSubviews.isEmpty {
             ignoreListStack.addArrangedSubview(emptyLabel("No matching applications."))
         }
+        scrollListToTop(ignoreListStack)
     }
 
     private func reloadShortcutsList() {
@@ -346,6 +389,15 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         if shortcutsListStack.arrangedSubviews.isEmpty {
             shortcutsListStack.addArrangedSubview(emptyLabel("No matching applications."))
         }
+        scrollListToTop(shortcutsListStack)
+    }
+
+    private func scrollListToTop(_ listStack: NSStackView) {
+        DispatchQueue.main.async {
+            guard let scrollView = listStack.enclosingScrollView else { return }
+            scrollView.contentView.scroll(to: NSPoint(x: 0, y: 0))
+            scrollView.reflectScrolledClipView(scrollView.contentView)
+        }
     }
 
     private func paddedScrollView(containing documentView: NSView) -> NSView {
@@ -356,12 +408,15 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
         scrollView.autohidesScrollers = true
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
-        let content = NSView()
+        let content = FlippedView()
         content.translatesAutoresizingMaskIntoConstraints = false
         content.addSubview(documentView)
         documentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.documentView = content
         outer.addSubview(scrollView)
+
+        let documentBottomConstraint = documentView.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -18)
+        documentBottomConstraint.priority = .defaultLow
 
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: outer.topAnchor),
@@ -370,10 +425,12 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
             scrollView.bottomAnchor.constraint(equalTo: outer.bottomAnchor),
 
             content.widthAnchor.constraint(equalTo: scrollView.contentView.widthAnchor),
+            content.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.contentView.heightAnchor),
             documentView.topAnchor.constraint(equalTo: content.topAnchor, constant: 18),
             documentView.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 18),
             documentView.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -18),
-            documentView.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -18),
+            documentView.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor, constant: -18),
+            documentBottomConstraint,
         ])
 
         return outer
@@ -437,7 +494,7 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
     private func linkCard(title: String, detail: String, url: String) -> NSView {
         let button = NSButton(title: detail, target: self, action: #selector(openAboutLink(_:)))
         button.bezelStyle = .inline
-        button.tag = url == "https://vivek.ink" ? 1 : 2
+        button.tag = url == "https://cmd-tab.vercel.app/" ? 1 : 2
         return settingCard(title: title, detail: url, control: button)
     }
 
@@ -608,11 +665,15 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
     private func refreshAccessibilityStatus() {
         let trusted = AXIsProcessTrusted()
         if trusted {
-            accessibilityStatusLabel.stringValue = "Accessibility access is granted. The right Command key is being monitored."
+            accessibilityStatusLabel.stringValue = "✓"
+            accessibilityStatusLabel.font = NSFont.systemFont(ofSize: 18, weight: .semibold)
+            accessibilityStatusLabel.alignment = .center
             accessibilityStatusLabel.textColor = NSColor.systemGreen
             openAccessibilityButton.isHidden = true
         } else {
             accessibilityStatusLabel.stringValue = "Accessibility access is not granted. CmdTab needs this permission to detect the right Command key."
+            accessibilityStatusLabel.font = NSFont.systemFont(ofSize: 12)
+            accessibilityStatusLabel.alignment = .natural
             accessibilityStatusLabel.textColor = NSColor.systemRed
             openAccessibilityButton.isHidden = false
         }
@@ -625,7 +686,7 @@ final class SettingsWindowController: NSWindowController, NSTextFieldDelegate, N
     }
 
     @objc private func openAboutLink(_ sender: NSButton) {
-        let urlString = sender.tag == 1 ? "https://vivek.ink" : "https://twitter.com/0xstatemachine"
+        let urlString = sender.tag == 1 ? "https://cmd-tab.vercel.app/" : "https://twitter.com/0xstatemachine"
         guard let url = URL(string: urlString) else { return }
         NSWorkspace.shared.open(url)
     }

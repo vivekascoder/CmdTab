@@ -41,8 +41,20 @@ enum InstantSpaceSwitcher {
     }
 
     private struct WorkspaceDisplaySpaces {
-        let spaces: [CGSSpaceID]
+        let spaces: [ManagedSpace]
         let activeIndex: Int
+    }
+
+    private struct ManagedSpace {
+        private static let fullscreenType = 1
+        private static let tiledType = 4
+
+        let id: CGSSpaceID
+        let type: Int
+
+        var isFullscreenLike: Bool {
+            type == Self.fullscreenType || type == Self.tiledType
+        }
     }
 
     static func activate(_ app: NSRunningApplication) {
@@ -108,9 +120,14 @@ enum InstantSpaceSwitcher {
     private static func switchToSpace(containing app: NSRunningApplication) -> Bool {
         guard let connection = mainConnectionID(),
               let activeSpaceID = activeSpaceID(connection: connection),
-              let targetSpaceID = spaceID(for: app, connection: connection),
-              targetSpaceID != activeSpaceID,
-              let indexes = currentDisplaySpaceIndexes(connection: connection, activeSpaceID: activeSpaceID),
+              let displaySpaces = currentDisplaySpaces(connection: connection, activeSpaceID: activeSpaceID),
+              let targetSpaceID = spaceID(for: app, connection: connection, displaySpaces: displaySpaces),
+              targetSpaceID != activeSpaceID else {
+            return false
+        }
+
+        let indexes = currentDisplaySpaceIndexes(displaySpaces: displaySpaces)
+        guard
               let currentIndex = indexes[activeSpaceID],
               let targetIndex = indexes[targetSpaceID] else {
             return false
@@ -137,7 +154,11 @@ enum InstantSpaceSwitcher {
         return spaceID == 0 ? nil : spaceID
     }
 
-    private static func spaceID(for app: NSRunningApplication, connection: CGSConnectionID) -> CGSSpaceID? {
+    private static func spaceID(
+        for app: NSRunningApplication,
+        connection: CGSConnectionID,
+        displaySpaces: WorkspaceDisplaySpaces
+    ) -> CGSSpaceID? {
         let windows = CGWindowListCopyWindowInfo([.optionAll], kCGNullWindowID) as? [[String: Any]] ?? []
         let windowIDs = windows.compactMap { info -> NSNumber? in
             guard let ownerPID = info[kCGWindowOwnerPID as String] as? NSNumber,
@@ -158,20 +179,38 @@ enum InstantSpaceSwitcher {
         let function = unsafeBitCast(symbol, to: CGSCopySpacesForWindowsFunction.self)
         guard let unmanaged = function(connection, 7, windowIDs as CFArray) else { return nil }
         let spaces = unmanaged.takeRetainedValue() as NSArray
-        return spaces.compactMap { ($0 as? NSNumber)?.uint64Value }.first
-    }
+        let candidateIDs = orderedUniqueSpaceIDs(from: spaces)
+        guard !candidateIDs.isEmpty else { return nil }
 
-    private static func currentDisplaySpaceIndexes(
-        connection: CGSConnectionID,
-        activeSpaceID: CGSSpaceID
-    ) -> [CGSSpaceID: Int]? {
-        guard let displaySpaces = currentDisplaySpaces(connection: connection, activeSpaceID: activeSpaceID) else {
-            return nil
+        let candidates = Set(candidateIDs)
+        let displayCandidates = displaySpaces.spaces.filter { candidates.contains($0.id) }
+        if let fullscreenSpace = displayCandidates.first(where: { $0.isFullscreenLike }) {
+            return fullscreenSpace.id
         }
 
+        return displayCandidates.first?.id ?? candidateIDs.first
+    }
+
+    private static func orderedUniqueSpaceIDs(from spaces: NSArray) -> [CGSSpaceID] {
         var result: [CGSSpaceID: Int] = [:]
-        for spaceID in displaySpaces.spaces {
-            result[spaceID] = result.count
+        var orderedIDs: [CGSSpaceID] = []
+
+        for space in spaces {
+            guard let id = (space as? NSNumber)?.uint64Value,
+                  result[id] == nil else {
+                continue
+            }
+            result[id] = orderedIDs.count
+            orderedIDs.append(id)
+        }
+
+        return orderedIDs
+    }
+
+    private static func currentDisplaySpaceIndexes(displaySpaces: WorkspaceDisplaySpaces) -> [CGSSpaceID: Int] {
+        var result: [CGSSpaceID: Int] = [:]
+        for space in displaySpaces.spaces {
+            result[space.id] = result.count
         }
         return result
     }
@@ -191,10 +230,14 @@ enum InstantSpaceSwitcher {
                 continue
             }
 
-            let spaceIDs = spaces.compactMap { ($0["id64"] as? NSNumber)?.uint64Value }
-            if let activeIndex = spaceIDs.firstIndex(of: activeSpaceID) {
+            let managedSpaces = spaces.compactMap { space -> ManagedSpace? in
+                guard let id = (space["id64"] as? NSNumber)?.uint64Value else { return nil }
+                let type = (space["type"] as? NSNumber)?.intValue ?? 0
+                return ManagedSpace(id: id, type: type)
+            }
+            if let activeIndex = managedSpaces.firstIndex(where: { $0.id == activeSpaceID }) {
                 return WorkspaceDisplaySpaces(
-                    spaces: spaceIDs,
+                    spaces: managedSpaces,
                     activeIndex: activeIndex
                 )
             }

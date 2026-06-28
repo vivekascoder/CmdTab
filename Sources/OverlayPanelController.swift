@@ -368,7 +368,7 @@ final class OverlayPanelController: NSObject {
         grid.translatesAutoresizingMaskIntoConstraints = false
         clippedView.addSubview(grid)
 
-        let titleLabel = NSTextField(labelWithString: "Cmdtab")
+        let titleLabel = NSTextField(labelWithString: "CmdTab")
         titleLabel.font = NSFont.systemFont(ofSize: 15, weight: .semibold)
         titleLabel.textColor = NSColor(white: 0.82, alpha: 1.0)
         titleLabel.alignment = .center
@@ -415,7 +415,7 @@ final class OverlayPanelController: NSObject {
             footerView.leadingAnchor.constraint(equalTo: clippedView.leadingAnchor),
             footerView.trailingAnchor.constraint(equalTo: clippedView.trailingAnchor),
             footerView.bottomAnchor.constraint(equalTo: clippedView.bottomAnchor),
-            footerView.heightAnchor.constraint(equalToConstant: 30),
+            footerView.heightAnchor.constraint(equalToConstant: 38),
 
             rightArrowBadge.centerYAnchor.constraint(equalTo: footerView.centerYAnchor),
             rightArrowBadge.trailingAnchor.constraint(equalTo: footerView.trailingAnchor, constant: -34),
